@@ -133,7 +133,7 @@ const otherSections = profileSections.filter((s) => s.heading !== POLITICAL_STAN
   <section class="rounded-lg p-5 mb-4" style="border: 1px solid #11457E30;">
     <h2 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #11457E;">{POLITICAL_STANCES_HEADING}</h2>
     {politicalStancesSection?.body
-      ? <div class="text-sm text-gray-700 prose prose-sm max-w-none" set:html={marked.parse(politicalStancesSection.body)} />
+      ? <div class="political-stances text-gray-700" set:html={marked.parse(politicalStancesSection.body)} />
       : <p class="text-sm text-gray-400 italic">Bude doplněno.</p>
     }
   </section>
@@ -148,3 +148,33 @@ const otherSections = profileSections.filter((s) => s.heading !== POLITICAL_STAN
     </section>
   ))}
 </Layout>
+
+<style>
+  .political-stances p {
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+  .political-stances p:last-child {
+    margin-bottom: 0;
+  }
+  /* Topic heading lines (bold with emoji) */
+  .political-stances p > strong:first-child {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  /* "pro"/"proti" inline bold */
+  .political-stances p > strong:not(:first-child) {
+    font-weight: 700;
+  }
+  /* Italic note line */
+  .political-stances p > em {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+  .political-stances a {
+    color: #11457E;
+    text-decoration: underline;
+  }
+</style>
