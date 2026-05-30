@@ -50,6 +50,9 @@ svg = svg.replace(/(\swidth=")([\d.]+)"/, (_m, _p, w) => {
 });
 svg = svg.replace(/\sheight="[^"]*"/, '');
 
+// Remove district number labels
+svg = svg.replace(/<text[\s\S]*?<\/text>/g, '');
+
 // Inject class + data-href on each active district path
 for (const [idStr] of Object.entries(DISTRICTS)) {
   const id = parseInt(idStr);
