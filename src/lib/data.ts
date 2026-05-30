@@ -54,12 +54,58 @@ export const DISTRICTS: Record<number, string> = {
   81: 'Uherské Hradiště',
 };
 
+function parseFrontmatter(content: string): Record<string, string> {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+  const result: Record<string, string> = {};
+  for (const line of match[1].split('\n')) {
+    const colon = line.indexOf(':');
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    let value = line.slice(colon + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    }
+    result[key] = value;
+  }
+  return result;
+}
+
 let _candidates: Candidate[] | null = null;
 
 export function getCandidates(): Candidate[] {
   if (_candidates) return _candidates;
-  const jsonPath = path.resolve(process.cwd(), 'data/candidates.json');
-  _candidates = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as Candidate[];
+  const profilesDir = path.resolve(process.cwd(), 'data/profiles');
+  const candidates: Candidate[] = [];
+  for (const districtDir of fs.readdirSync(profilesDir)) {
+    const districtPath = path.join(profilesDir, districtDir);
+    if (!fs.statSync(districtPath).isDirectory()) continue;
+    for (const file of fs.readdirSync(districtPath)) {
+      if (!file.endsWith('.md')) continue;
+      const content = fs.readFileSync(path.join(districtPath, file), 'utf-8');
+      const fm = parseFrontmatter(content);
+      if (!fm.districtId) continue;
+      candidates.push({
+        districtId: parseInt(fm.districtId),
+        candidateNumber: parseInt(fm.candidateNumber),
+        name: fm.name ?? '',
+        age: parseInt(fm.age) || 0,
+        electoralParty: fm.electoralParty ?? '',
+        nominatingParty: fm.nominatingParty ?? '',
+        politicalAffiliation: fm.politicalAffiliation ?? '',
+        occupation: fm.occupation ?? '',
+        residence: fm.residence ?? '',
+        round1Votes: parseInt(fm.round1Votes) || 0,
+        round1Percent: parseFloat(fm.round1Percent) || 0,
+        round2Votes: parseInt(fm.round2Votes) || 0,
+        round2Percent: parseFloat(fm.round2Percent) || 0,
+        ...(fm.hlidacStatuUrl ? { hlidacStatuUrl: fm.hlidacStatuUrl } : {}),
+      });
+    }
+  }
+  candidates.sort((a, b) => a.districtId - b.districtId || a.candidateNumber - b.candidateNumber);
+  _candidates = candidates;
   return _candidates;
 }
 
@@ -233,8 +279,10 @@ export function getCandidateProfileSections(districtId: number, candidateNumber:
   const md = fs.readFileSync(profilePath, 'utf-8');
 
   const sections: ProfileSection[] = [];
+  // Strip frontmatter before parsing sections
+  const body = md.replace(/^---\n[\s\S]*?\n---\n?/, '');
   // Split on ## headings (skip leading # h1 title line if present)
-  const parts = md.split(/^## /m);
+  const parts = body.split(/^## /m);
   for (const part of parts.slice(1)) {
     const newline = part.indexOf('\n');
     const heading = newline === -1 ? part.trim() : part.slice(0, newline).trim();
