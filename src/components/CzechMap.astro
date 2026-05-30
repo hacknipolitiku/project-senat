@@ -1,84 +1,163 @@
 ---
-import { DISTRICTS, DISTRICT_COORDS } from '../lib/data';
+import { DISTRICTS } from '../lib/data';
 
 const base = import.meta.env.BASE_URL;
 
-// Czech Republic outline path (approximate, clockwise from western tip)
-const outline = `
-  M 60,220
-  L 68,190 L 75,162 L 95,130 L 120,108 L 148,95
-  L 185,83 L 228,76 L 270,73 L 310,78 L 355,82
-  L 390,88 L 425,92 L 460,90 L 500,96 L 540,108
-  L 580,118 L 618,130 L 658,148 L 695,168 L 728,190
-  L 748,215 L 753,245 L 748,272 L 735,298 L 718,318
-  L 700,335 L 678,350 L 650,362 L 620,372 L 590,378
-  L 558,382 L 524,388 L 490,396 L 455,404 L 418,408
-  L 380,410 L 342,408 L 308,404 L 272,396 L 238,385
-  L 208,370 L 178,352 L 152,330 L 128,305 L 105,278
-  L 85,255 L 68,240 Z
-`.trim();
+// Coordinates from the "Čísla" (numbers) layer of the SVG (viewBox 3845 x 2990)
+// x is horizontal center of label, y is text baseline — we offset y up by ~30px
+const LABEL_COORDS: Record<number, { x: number; y: number }> = {
+  1:  { x: 518,  y: 705 },
+  2:  { x: 342,  y: 778 },
+  3:  { x: 367,  y: 1109 },
+  4:  { x: 867,  y: 459 },
+  5:  { x: 691,  y: 543 },
+  6:  { x: 885,  y: 749 },
+  7:  { x: 786,  y: 1333 },
+  8:  { x: 757,  y: 1021 },
+  9:  { x: 1473, y: 2571 },
+  10: { x: 1227, y: 1961 },
+  11: { x: 603,  y: 1487 },
+  12: { x: 1036, y: 1634 },
+  13: { x: 1374, y: 1462 },
+  14: { x: 1440, y: 1800 },
+  15: { x: 1690, y: 1572 },
+  16: { x: 1135, y: 973 },
+  17: { x: 426,  y: 2704 },
+  18: { x: 1154, y: 1205 },
+  19: { x: 742,  y: 2516 },
+  20: { x: 514,  y: 2535 },
+  21: { x: 338,  y: 2498 },
+  22: { x: 665,  y: 2432 },
+  23: { x: 566,  y: 2204 },
+  24: { x: 834,  y: 2329 },
+  25: { x: 250,  y: 2351 },
+  26: { x: 562,  y: 2406 },
+  27: { x: 478,  y: 2325 },
+  28: { x: 1359, y: 705 },
+  29: { x: 1187, y: 540 },
+  30: { x: 1124, y: 830 },
+  31: { x: 1110, y: 356 },
+  32: { x: 974,  y: 393 },
+  33: { x: 1246, y: 246 },
+  34: { x: 1716, y: 150 },
+  35: { x: 1837, y: 349 },
+  36: { x: 1455, y: 349 },
+  37: { x: 1789, y: 653 },
+  38: { x: 1598, y: 562 },
+  39: { x: 2094, y: 451 },
+  40: { x: 1782, y: 1124 },
+  41: { x: 1470, y: 1061 },
+  42: { x: 1653, y: 889 },
+  43: { x: 1966, y: 896 },
+  44: { x: 2072, y: 1072 },
+  45: { x: 1988, y: 738 },
+  46: { x: 2491, y: 940 },
+  47: { x: 2227, y: 591 },
+  48: { x: 2289, y: 811 },
+  49: { x: 2546, y: 1418 },
+  50: { x: 2414, y: 1153 },
+  51: { x: 2256, y: 1366 },
+  52: { x: 1929, y: 1568 },
+  53: { x: 2149, y: 1675 },
+  54: { x: 2311, y: 1873 },
+  55: { x: 2425, y: 1671 },
+  56: { x: 2623, y: 1910 },
+  57: { x: 2715, y: 1623 },
+  58: { x: 2473, y: 2634 },
+  59: { x: 2322, y: 2564 },
+  60: { x: 2300, y: 2421 },
+  61: { x: 3016, y: 1238 },
+  62: { x: 2833, y: 1392 },
+  63: { x: 3160, y: 1322 },
+  64: { x: 3039, y: 914 },
+  65: { x: 2770, y: 837 },
+  66: { x: 2814, y: 1153 },
+  67: { x: 3369, y: 1208 },
+  68: { x: 3288, y: 999 },
+  69: { x: 3538, y: 1252 },
+  70: { x: 3354, y: 2483 },
+  71: { x: 3230, y: 2619 },
+  72: { x: 3168, y: 2252 },
+  73: { x: 3704, y: 1230 },
+  74: { x: 3527, y: 2204 },
+  75: { x: 3604, y: 1017 },
+  76: { x: 2980, y: 1557 },
+  77: { x: 3388, y: 1421 },
+  78: { x: 3241, y: 1554 },
+  79: { x: 2847, y: 1822 },
+  80: { x: 3197, y: 1701 },
+  81: { x: 3042, y: 1785 },
+};
+
+const activeIds = new Set(Object.keys(DISTRICTS).map(Number));
 ---
 
-<div class="w-full overflow-x-auto">
-  <svg
-    viewBox="0 0 800 480"
-    xmlns="http://www.w3.org/2000/svg"
-    class="w-full max-w-4xl mx-auto"
-    aria-label="Mapa senátních obvodů ČR 2026"
-  >
-    <!-- Country fill -->
-    <path d={outline} fill="#f5f5f4" stroke="#d6d3d1" stroke-width="1.5" />
+<div class="w-full">
+  <!-- Map container with overlaid SVG for clickable districts -->
+  <div class="relative w-full">
+    <img
+      src={`${base}senate-map.svg`}
+      alt="Mapa senátních obvodů České republiky"
+      class="w-full h-auto block"
+    />
+    <!-- Overlay SVG matching the map's coordinate space -->
+    <svg
+      viewBox="0 0 3845.2656 2990.762"
+      xmlns="http://www.w3.org/2000/svg"
+      class="absolute inset-0 w-full h-full"
+      aria-label="Mapa senátních obvodů ČR 2026"
+    >
+      {Object.entries(LABEL_COORDS).map(([idStr, coords]) => {
+        const id = parseInt(idStr);
+        const isActive = activeIds.has(id);
+        if (!isActive) return null;
+        const name = DISTRICTS[id];
+        const r = 95;
+        return (
+          <a href={`${base}obvod/${id}/`} aria-label={`Obvod ${id} – ${name}`}>
+            <circle
+              cx={coords.x}
+              cy={coords.y}
+              r={r}
+              fill="white"
+              fill-opacity="0.85"
+              stroke="#374151"
+              stroke-width="12"
+              class="hover:fill-gray-100 cursor-pointer transition-colors"
+            />
+            <text
+              x={coords.x}
+              y={coords.y + 18}
+              text-anchor="middle"
+              font-size="80"
+              font-family="system-ui, sans-serif"
+              font-weight="700"
+              fill="#111827"
+              pointer-events="none"
+            >
+              {id}
+            </text>
+          </a>
+        );
+      })}
+    </svg>
+  </div>
 
-    <!-- District markers -->
-    {Object.entries(DISTRICTS).map(([idStr]) => {
+  <!-- Legend -->
+  <div class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
+    {Object.entries(DISTRICTS).map(([idStr, name]) => {
       const id = parseInt(idStr);
-      const coords = DISTRICT_COORDS[id];
-      const name = DISTRICTS[id];
-      if (!coords) return null;
-      const href = `${base}obvod/${id}/`;
       return (
-        <a href={href} aria-label={`Obvod ${id} – ${name}`}>
-          <circle
-            cx={coords.x}
-            cy={coords.y}
-            r="13"
-            fill="white"
-            stroke="#374151"
-            stroke-width="1.5"
-            class="hover:fill-gray-100 transition-colors cursor-pointer"
-          />
-          <text
-            x={coords.x}
-            y={coords.y + 4}
-            text-anchor="middle"
-            font-size="9"
-            font-family="system-ui, sans-serif"
-            font-weight="600"
-            fill="#111827"
-            pointer-events="none"
-          >
+        <a
+          href={`${base}obvod/${id}/`}
+          class="flex items-center gap-2 px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-gray-400 text-xs font-semibold text-gray-700 shrink-0">
             {id}
-          </text>
+          </span>
+          <span class="text-gray-700 truncate">{name}</span>
         </a>
       );
     })}
-  </svg>
-</div>
-
-<!-- Legend -->
-<div class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm">
-  {Object.entries(DISTRICTS).map(([idStr, name]) => {
-    const id = parseInt(idStr);
-    return (
-      <a
-        href={`${base}obvod/${id}/`}
-        class="flex items-center gap-2 px-3 py-1.5 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
-      >
-        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full border border-gray-400 text-xs font-semibold text-gray-700 shrink-0">
-          {id}
-        </span>
-        <span class="text-gray-700 truncate">{name}</span>
-      </a>
-    );
-  })}
+  </div>
 </div>
