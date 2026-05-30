@@ -14,42 +14,48 @@ if (!district) return Astro.redirect('/');
 
 const base = import.meta.env.BASE_URL;
 
-// Sort by round 1 votes descending, then by candidate number
 const sorted = [...district.candidates].sort((a, b) => b.round1Votes - a.round1Votes);
 const hasResults = sorted.some((c) => c.round1Votes > 0);
 ---
 <Layout title={`Obvod ${district.id} – ${district.name}`} description={`Kandidáti v obvodu ${district.id} ${district.name}`}>
-  <nav class="text-sm text-gray-500 mb-6">
-    <a href={base} class="hover:text-gray-900 transition-colors">← Přehled obvodů</a>
+  <nav class="text-sm mb-6">
+    <a href={base} class="transition-opacity hover:opacity-70" style="color: #11457E;">← Přehled obvodů</a>
   </nav>
 
   <div class="mb-8">
     <div class="flex items-center gap-3 mb-1">
-      <span class="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-gray-400 text-sm font-bold text-gray-700">
+      <span
+        class="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold"
+        style="background-color: #11457E; color: white; border: 2px solid #D7141A;"
+      >
         {district.id}
       </span>
-      <h1 class="text-3xl font-bold text-gray-900">{district.name}</h1>
+      <h1 class="text-3xl font-bold" style="color: #11457E;">{district.name}</h1>
     </div>
     <p class="text-gray-500 ml-13">{district.candidates.length} kandidátů</p>
   </div>
 
   <div class="space-y-3">
     {sorted.map((c) => {
-      const inRound2 = c.round2Votes > 0;
-      const winner = inRound2 && sorted.filter(x => x.round2Votes > 0).length > 0
+      const winner = sorted.filter(x => x.round2Votes > 0).length > 0
         ? sorted.filter(x => x.round2Votes > 0).sort((a, b) => b.round2Votes - a.round2Votes)[0]?.candidateNumber === c.candidateNumber
         : false;
       return (
         <a
           href={`${base}kandidat/${district.id}/${c.candidateNumber}/`}
-          class={`block border rounded-lg px-5 py-4 hover:bg-gray-50 transition-colors ${winner ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}`}
+          class="block rounded-lg px-5 py-4 transition-colors hover:bg-blue-50"
+          style={`border: 1px solid ${winner ? '#D7141A' : '#e5e7eb'}; ${winner ? 'background-color: #fff5f5;' : ''}`}
         >
           <div class="flex items-start justify-between gap-4">
             <div class="min-w-0">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs text-gray-400 font-mono">#{c.candidateNumber}</span>
                 <span class="font-semibold text-gray-900">{c.name}</span>
-                {winner && <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-medium">Zvolený</span>}
+                {winner && (
+                  <span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background-color: #D7141A; color: white;">
+                    Zvolený
+                  </span>
+                )}
               </div>
               <div class="mt-1 text-sm text-gray-500 flex flex-wrap gap-x-3 gap-y-0.5">
                 <span>{c.electoralParty}</span>
@@ -61,7 +67,7 @@ const hasResults = sorted.some((c) => c.round1Votes > 0);
             </div>
             {hasResults && (
               <div class="text-right shrink-0">
-                <div class="text-sm font-medium text-gray-900">
+                <div class="text-sm font-medium" style="color: #11457E;">
                   {c.round1Percent.toFixed(2).replace('.', ',')} %
                 </div>
                 <div class="text-xs text-gray-400">{c.round1Votes.toLocaleString('cs')} hl.</div>
@@ -70,10 +76,10 @@ const hasResults = sorted.some((c) => c.round1Votes > 0);
           </div>
           {hasResults && (
             <div class="mt-2">
-              <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-1.5 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
                 <div
-                  class="h-full bg-gray-400 rounded-full"
-                  style={`width: ${Math.min(c.round1Percent, 100)}%`}
+                  class="h-full rounded-full"
+                  style={`width: ${Math.min(c.round1Percent, 100)}%; background-color: ${winner ? '#D7141A' : '#11457E'};`}
                 />
               </div>
             </div>

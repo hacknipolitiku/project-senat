@@ -18,20 +18,20 @@ const base = import.meta.env.BASE_URL;
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
   </head>
   <body class="min-h-screen bg-white text-gray-900 font-sans">
-    <header class="border-b border-gray-200">
+    <header style="background-color: #11457E;">
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-        <a href={base} class="text-gray-900 font-semibold text-lg tracking-tight hover:text-gray-600 transition-colors">
+        <a href={base} class="font-semibold text-lg tracking-tight transition-opacity hover:opacity-80" style="color: white;">
           Senátní volby 2026
         </a>
-        <span class="text-gray-300">|</span>
-        <span class="text-gray-500 text-sm">Česká republika</span>
+        <span style="color: #D7141A; font-size: 1.25rem;">|</span>
+        <span class="text-sm" style="color: rgba(255,255,255,0.7);">Česká republika</span>
       </div>
     </header>
     <main class="max-w-5xl mx-auto px-4 py-8">
       <slot />
     </main>
-    <footer class="border-t border-gray-200 mt-12">
-      <div class="max-w-5xl mx-auto px-4 py-4 text-sm text-gray-400 text-center">
+    <footer class="mt-12" style="border-top: 3px solid #D7141A;">
+      <div class="max-w-5xl mx-auto px-4 py-4 text-sm text-center" style="color: #11457E;">
         Data: Český statistický úřad · Volby do Senátu Parlamentu ČR 2026
       </div>
     </footer>
