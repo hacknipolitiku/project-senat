@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CzechMap from '../components/CzechMap.astro';
+import { getDistricts } from '../lib/data';
+
+const districts = getDistricts();
+const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 0);
+---
+<Layout title="Přehled obvodů">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2" style="color: #11457E;">Volby do Senátu 2026</h1>
+    <p class="text-gray-500">
+      {districts.length} obvodů · {totalCandidates} kandidátů
+    </p>
+  </div>
+
+  <CzechMap />
+</Layout>

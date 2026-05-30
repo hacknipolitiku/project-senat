@@ -1,0 +1,150 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCandidates, getDistrict, getCandidateProfileSections } from '../../../lib/data';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+  return getCandidates().map((c) => ({
+    params: { obvod: String(c.districtId), kandidat: String(c.candidateNumber) },
+  }));
+}
+
+const { obvod, kandidat } = Astro.params;
+const districtId = parseInt(obvod);
+const candidateNumber = parseInt(kandidat);
+const district = getDistrict(districtId);
+const candidate = district?.candidates.find((c) => c.candidateNumber === candidateNumber);
+
+if (!candidate || !district) return Astro.redirect('/');
+
+const base = import.meta.env.BASE_URL;
+
+const round2Candidates = district.candidates.filter((c) => c.round2Votes > 0);
+const winner = round2Candidates.length > 0
+  ? round2Candidates.sort((a, b) => b.round2Votes - a.round2Votes)[0]
+  : null;
+const isWinner = winner?.candidateNumber === candidate.candidateNumber;
+const hasResults = district.candidates.some((c) => c.round1Votes > 0);
+const profileSections = getCandidateProfileSections(districtId, candidateNumber);
+const POLITICAL_STANCES_HEADING = 'Projevované politické postoje';
+const politicalStancesSection = profileSections.find((s) => s.heading === POLITICAL_STANCES_HEADING);
+const otherSections = profileSections.filter((s) => s.heading !== POLITICAL_STANCES_HEADING);
+---
+<Layout title={candidate.name} description={`${candidate.name} – kandidát v obvodu ${district.id} ${district.name}`}>
+  <nav class="text-sm mb-6 flex items-center gap-2" style="color: #11457E;">
+    <a href={base} class="hover:opacity-70 transition-opacity" style="color: #11457E;">Přehled obvodů</a>
+    <span style="color: #D7141A;">›</span>
+    <a href={`${base}obvod/${district.id}/`} class="hover:opacity-70 transition-opacity" style="color: #11457E;">
+      Obvod {district.id} – {district.name}
+    </a>
+  </nav>
+
+  <div class="mb-8">
+    <div class="flex items-start gap-4">
+      <div class="shrink-0 mt-1">
+        <div
+          class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
+          style="background-color: #11457E; color: white; border: 3px solid #D7141A;"
+        >
+          {candidate.candidateNumber}
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-3xl font-bold text-gray-900">{candidate.name}</h1>
+          {isWinner && (
+            <span class="text-sm px-2 py-0.5 rounded-full font-medium" style="background-color: #D7141A; color: white;">
+              Zvolený senátor
+            </span>
+          )}
+        </div>
+        <p class="text-gray-500 mt-1">Obvod {district.id} · {district.name}</p>
+        {candidate.hlidacStatuUrl && (
+          <a
+            href={candidate.hlidacStatuUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 mt-2 text-xs font-medium transition-opacity hover:opacity-70"
+            style="color: #11457E;"
+          >
+            Hlídač státu →
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <section class="rounded-lg p-5" style="border: 1px solid #11457E30;">
+      <h2 class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: #11457E;">Základní informace</h2>
+      <dl class="space-y-3">
+        <div class="flex justify-between gap-4">
+          <dt class="text-sm text-gray-500">Věk</dt>
+          <dd class="text-sm font-medium text-gray-900">{candidate.age} let</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-sm text-gray-500">Volební strana</dt>
+          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.electoralParty}</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-sm text-gray-500">Politická příslušnost</dt>
+          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.politicalAffiliation}</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-sm text-gray-500">Povolání</dt>
+          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.occupation}</dd>
+        </div>
+        <div class="flex justify-between gap-4">
+          <dt class="text-sm text-gray-500">Bydliště</dt>
+          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.residence}</dd>
+        </div>
+      </dl>
+    </section>
+
+    {hasResults && (
+      <section class="rounded-lg p-5" style="border: 1px solid #11457E30;">
+        <h2 class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: #11457E;">Výsledky voleb</h2>
+        <dl class="space-y-3">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <dt class="text-gray-500">1. kolo</dt>
+              <dd class="font-medium text-gray-900">{candidate.round1Percent.toFixed(2).replace('.', ',')} % ({candidate.round1Votes.toLocaleString('cs')} hl.)</dd>
+            </div>
+            <div class="h-2 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
+              <div class="h-full rounded-full" style={`width: ${Math.min(candidate.round1Percent, 100)}%; background-color: #11457E;`} />
+            </div>
+          </div>
+          {candidate.round2Votes > 0 && (
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <dt class="text-gray-500">2. kolo</dt>
+                <dd class="font-medium text-gray-900">{candidate.round2Percent.toFixed(2).replace('.', ',')} % ({candidate.round2Votes.toLocaleString('cs')} hl.)</dd>
+              </div>
+              <div class="h-2 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
+                <div class="h-full rounded-full" style={`width: ${Math.min(candidate.round2Percent, 100)}%; background-color: #D7141A;`} />
+              </div>
+            </div>
+          )}
+        </dl>
+      </section>
+    )}
+  </div>
+
+  <section class="rounded-lg p-5 mb-4" style="border: 1px solid #11457E30;">
+    <h2 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #11457E;">{POLITICAL_STANCES_HEADING}</h2>
+    {politicalStancesSection?.body
+      ? <div class="text-sm text-gray-700 prose prose-sm max-w-none" set:html={marked.parse(politicalStancesSection.body)} />
+      : <p class="text-sm text-gray-400 italic">Bude doplněno.</p>
+    }
+  </section>
+
+  {otherSections.map((section) => (
+    <section class="rounded-lg p-5 mb-4" style="border: 1px solid #11457E30;">
+      <h2 class="text-xs font-semibold uppercase tracking-wide mb-3" style="color: #11457E;">{section.heading}</h2>
+      {section.body
+        ? <p class="text-sm text-gray-700 whitespace-pre-line">{section.body}</p>
+        : <p class="text-sm text-gray-400 italic">Bude doplněno.</p>
+      }
+    </section>
+  ))}
+</Layout>
