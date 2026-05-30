@@ -42,9 +42,12 @@ let svg = fs.readFileSync(
   'utf-8'
 );
 
-// Strip XML declaration and make responsive (remove fixed width/height)
+// Strip XML declaration, replace fixed dimensions with a responsive viewBox
 svg = svg.replace(/<\?xml[^>]+\?>\s*/, '');
-svg = svg.replace(/\swidth="[^"]*"/, '');
+svg = svg.replace(/(\swidth=")([\d.]+)"/, (_m, _p, w) => {
+  const h = svg.match(/\sheight="([\d.]+)"/)?.[1] ?? '2990.762';
+  return ` viewBox="0 0 ${w} ${h}"`;
+});
 svg = svg.replace(/\sheight="[^"]*"/, '');
 
 // Inject class + data-href on each active district path
