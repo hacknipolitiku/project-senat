@@ -112,33 +112,6 @@ const otherSections = profileSections.filter((s) => s.heading !== POLITICAL_STAN
       </dl>
     </section>
 
-    {hasResults && (
-      <section class="rounded-lg p-5" style="border: 1px solid #11457E30;">
-        <h2 class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: #11457E;">Výsledky voleb</h2>
-        <dl class="space-y-3">
-          <div>
-            <div class="flex justify-between text-sm mb-1">
-              <dt class="text-gray-500">1. kolo</dt>
-              <dd class="font-medium text-gray-900">{candidate.round1Percent.toFixed(2).replace('.', ',')} % ({candidate.round1Votes.toLocaleString('cs')} hl.)</dd>
-            </div>
-            <div class="h-2 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
-              <div class="h-full rounded-full" style={`width: ${Math.min(candidate.round1Percent, 100)}%; background-color: #11457E;`} />
-            </div>
-          </div>
-          {candidate.round2Votes > 0 && (
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <dt class="text-gray-500">2. kolo</dt>
-                <dd class="font-medium text-gray-900">{candidate.round2Percent.toFixed(2).replace('.', ',')} % ({candidate.round2Votes.toLocaleString('cs')} hl.)</dd>
-              </div>
-              <div class="h-2 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
-                <div class="h-full rounded-full" style={`width: ${Math.min(candidate.round2Percent, 100)}%; background-color: #D7141A;`} />
-              </div>
-            </div>
-          )}
-        </dl>
-      </section>
-    )}
   </div>
 
   <section class="rounded-lg p-5 mb-4" style="border: 1px solid #11457E30;">

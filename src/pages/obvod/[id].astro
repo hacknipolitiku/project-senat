@@ -70,25 +70,6 @@ const hasResults = sorted.some((c) => c.round1Votes > 0);
                 <span>{c.residence}</span>
               </div>
             </div>
-            {hasResults && (
-              <div class="text-right shrink-0">
-                <div class="text-sm font-medium" style="color: #11457E;">
-                  {c.round1Percent.toFixed(2).replace('.', ',')} %
-                </div>
-                <div class="text-xs text-gray-400">{c.round1Votes.toLocaleString('cs')} hl.</div>
-              </div>
-            )}
-          </div>
-          {hasResults && (
-            <div class="mt-2">
-              <div class="h-1.5 rounded-full overflow-hidden" style="background-color: #f3f4f6;">
-                <div
-                  class="h-full rounded-full"
-                  style={`width: ${Math.min(c.round1Percent, 100)}%; background-color: ${winner ? '#D7141A' : '#11457E'};`}
-                />
-              </div>
-            </div>
-          )}
         </a>
       );
     })}
