@@ -2,7 +2,7 @@
 
 Webová stránka přibližující kandidáty do senátních voleb v České republice 2026.
 
-Živá verze: https://valekjo.github.io/senat-2026-web/
+Živá verze: https://hacknipolitiku.github.io/project-senat/
 
 ## Stránky
 
@@ -38,7 +38,7 @@ npx playwright test
 
 ## Nasazení
 
-Stránka se nasazuje na GitHub Pages do `https://valekjo.github.io/senat-2026-web/`. Základní URL je konfigurována v `astro.config.mjs`.
+Stránka se nasazuje na GitHub Pages do `https://hacknipolitiku.github.io/project-senat/`. Základní URL je konfigurována v `astro.config.mjs`.
 
 ## Technologie
 

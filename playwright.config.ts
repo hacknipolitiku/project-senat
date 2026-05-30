@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4322/senat-2026-web/',
+    baseURL: 'http://localhost:4322/project-senat/',
     trace: 'on-first-retry',
   },
   projects: [
@@ -23,7 +23,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4322',
-    url: 'http://localhost:4322/senat-2026-web/',
+    url: 'http://localhost:4322/project-senat/',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },

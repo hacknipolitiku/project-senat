@@ -25,7 +25,7 @@ test.describe('District page', () => {
   test('back navigation link returns to home', async ({ page }) => {
     await page.goto('obvod/6/');
     await page.getByRole('link', { name: /← Přehled obvodů/ }).click();
-    await expect(page).toHaveURL(/\/senat-2026-web\/?$/);
+    await expect(page).toHaveURL(/\/project-senat\/?$/);
   });
 
   test('Praha districts are accessible', async ({ page }) => {

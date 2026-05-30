@@ -2,7 +2,7 @@
 
 ## Project
 
-Astro static site for Czech Senate elections 2026. Deployed to GitHub Pages at `https://valekjo.github.io/senat-2026-web/`.
+Astro static site for Czech Senate elections 2026. Deployed to GitHub Pages at `https://hacknipolitiku.github.io/project-senat/`.
 
 ## Commands
 
