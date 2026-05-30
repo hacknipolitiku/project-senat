@@ -61,21 +61,38 @@ function extractBody(existingContent) {
   return existingContent;
 }
 
-const defaultBody = (name) => `
-# ${name}
+const TITLES = new Set([
+  'Bc.', 'Ing.', 'Mgr.', 'MgA.', 'MUDr.', 'MDDr.', 'MVDr.',
+  'JUDr.', 'PhDr.', 'RNDr.', 'PharmDr.', 'ThDr.', 'PaedDr.',
+  'RSDr.', 'Dr.', 'doc.', 'Doc.', 'prof.', 'Prof.',
+  'Ph.D.', 'PhD.', 'CSc.', 'DrSc.', 'DSc.', 'DiS.',
+  'MBA', 'LL.M.', 'MSc.', 'DBA', 'MPA',
+  'gen.', 'plk.', 'brig.', 'et.', 'et', 'v.', 'záloze', 'h.', 'c.',
+]);
 
-## Motivace ke kandidatuře
+function nameToEmail(raw) {
+  const tokens = raw.trim().split(/\s+/).map(t => t.replace(/,+$/, ''));
+  const nameParts = tokens.filter(t => !TITLES.has(t));
+  if (nameParts.length < 2) return null;
+  const firstName = nameParts[nameParts.length - 1];
+  const surname = nameParts[0];
+  const slug = [firstName, surname]
+    .map(s => s.toLowerCase()
+      .replace(/[áä]/g, 'a').replace(/č/g, 'c').replace(/ď/g, 'd')
+      .replace(/[éě]/g, 'e').replace(/í/g, 'i').replace(/ň/g, 'n')
+      .replace(/[óö]/g, 'o').replace(/ř/g, 'r').replace(/š/g, 's')
+      .replace(/ť/g, 't').replace(/[úůü]/g, 'u').replace(/ý/g, 'y')
+      .replace(/ž/g, 'z').replace(/[^a-z0-9]/g, ''))
+    .join('-');
+  return `${slug}@pomoztemidosenatu.cz`;
+}
 
-<!-- Doplňte odpověď kandidáta -->
+const isPlaceholderBody = (body) => body.includes('Doplňte odpověď kandidáta');
 
-## Kde vidíte republiku za 6 let?
-
-<!-- Doplňte odpověď kandidáta -->
-
-## Zapojení do kampaně
-
-<!-- Kontaktní informace a možnosti zapojení -->
-`;
+const defaultBody = (name) => {
+  const email = nameToEmail(name);
+  return `\n${email ? email : ''}\n`;
+};
 
 const raw = fs.readFileSync(csvPath, 'utf-8');
 const lines = raw.split('\n').filter(l => l.trim());
@@ -108,7 +125,8 @@ for (const c of candidates) {
 
   let body;
   if (fs.existsSync(file)) {
-    body = extractBody(fs.readFileSync(file, 'utf-8'));
+    const existing = extractBody(fs.readFileSync(file, 'utf-8'));
+    body = isPlaceholderBody(existing) ? defaultBody(c.name) : existing;
     updated++;
   } else {
     body = defaultBody(c.name);
