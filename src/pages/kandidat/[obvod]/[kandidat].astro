@@ -31,7 +31,8 @@ const displayName = formatCzechName(candidate.name);
 const birthYear = 2026 - candidate.age;
 const partyLogos = getPartyLogoFiles(candidate.electoralParty);
 const profilePath = path.resolve(process.cwd(), `data/profiles/${districtId}/${candidateNumber}.md`);
-const profileMd = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, 'utf-8') : '';
+const rawMd = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, 'utf-8') : '';
+const profileMd = rawMd.replace(/^---\n[\s\S]*?\n---\n?/, '');
 ---
 <Layout title={displayName} description={`${displayName} – kandidát v obvodu ${district.id} ${district.name}`}>
   <nav class="text-sm mb-6 flex items-center gap-2" style="color: #11457E;">
