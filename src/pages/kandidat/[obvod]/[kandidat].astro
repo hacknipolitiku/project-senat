@@ -67,9 +67,11 @@ const otherSections = profileSections.filter((s) => s.heading !== POLITICAL_STAN
             href={candidate.hlidacStatuUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center mt-2 transition-opacity hover:opacity-70"
+            class="inline-flex items-center gap-2 mt-2 px-3 py-1.5 rounded border text-xs font-medium transition-colors hover:bg-gray-50"
+            style="border-color: #e5e7eb;"
           >
-            <img src={`${base}logos/hlidac-statu.png`} alt="Hlídač státu" class="h-6 w-auto" />
+            <img src={`${base}logos/hlidac-statu.png`} alt="" class="h-4 w-auto" />
+            Hlídač státu
           </a>
         )}
       </div>
