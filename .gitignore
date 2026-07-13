@@ -4,3 +4,4 @@ dist/
 .env
 .env.*
 test-results/
+.DS_Store

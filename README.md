@@ -6,11 +6,11 @@ Webová stránka přibližující kandidáty do senátních voleb v České repu
 
 ## Stránky
 
-| Stránka | URL |
-|---|---|
-| Úvodní mapa obvodů | `/` |
-| Detail obvodu | `/obvod/[id]` |
-| Detail kandidáta | `/kandidat/[obvod]/[id]` |
+| Stránka            | URL                      |
+| ------------------ | ------------------------ |
+| Úvodní mapa obvodů | `/`                      |
+| Detail obvodu      | `/obvod/[id]`            |
+| Detail kandidáta   | `/kandidat/[obvod]/[id]` |
 
 ## Data
 

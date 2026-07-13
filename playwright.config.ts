@@ -1,29 +1,30 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: 'list',
+  reporter: "list",
   use: {
-    baseURL: 'http://localhost:4322/project-senat/',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:4322/project-senat/",
+    trace: "on-first-retry",
   },
   projects: [
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         launchOptions: {
-          executablePath: '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell',
+          executablePath:
+            "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
         },
       },
     },
   ],
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4322',
-    url: 'http://localhost:4322/project-senat/',
+    command: "npm run build && npm run preview -- --port 4322",
+    url: "http://localhost:4322/project-senat/",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
