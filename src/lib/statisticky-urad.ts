@@ -65,6 +65,7 @@ interface Candidate {
   round1Percent?: number;
   round2Votes?: number;
   round2Percent?: number;
+  hlidacStatuOsobaId?: string;
 }
 
 function toFrontmatter(c: Candidate): string {
@@ -84,6 +85,7 @@ function toFrontmatter(c: Candidate): string {
   if (c.round1Percent !== undefined) lines.push(`round1Percent: ${c.round1Percent}`);
   if (c.round2Votes !== undefined) lines.push(`round2Votes: ${c.round2Votes}`);
   if (c.round2Percent !== undefined) lines.push(`round2Percent: ${c.round2Percent}`);
+  if (c.hlidacStatuOsobaId) lines.push(`hlidacStatuOsobaId: ${yamlStr(c.hlidacStatuOsobaId)}`);
   lines.push("---");
   return lines.join("\n");
 }
@@ -124,10 +126,13 @@ export function importCsv(csvArg: string): void {
     const slug = candidateSlug(c.name, c.districtId, c.candidateNumber);
     const filePath = path.join(candidatesDir, `${slug}.md`);
     const exists = fs.existsSync(filePath);
-    const body = exists
-      ? matter(fs.readFileSync(filePath, "utf-8")).content
-      : defaultBody(c.name);
-    fs.writeFileSync(filePath, toFrontmatter(c) + "\n" + body);
+    if (exists) {
+      const parsed = matter(fs.readFileSync(filePath, "utf-8"));
+      c.hlidacStatuOsobaId = parsed.data.hlidacStatuOsobaId ?? undefined;
+      fs.writeFileSync(filePath, toFrontmatter(c) + "\n" + parsed.content);
+    } else {
+      fs.writeFileSync(filePath, toFrontmatter(c) + "\n" + defaultBody(c.name));
+    }
     if (exists) updated++;
     else created++;
   }

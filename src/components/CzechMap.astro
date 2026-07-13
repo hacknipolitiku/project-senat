@@ -54,8 +54,7 @@ const districtData: Record<string, { href: string; name: string }> =
           <span style="color: #2a2b66;" class="truncate">
             {d.data.name}
           </span>
-          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800"
-          ></span>
+          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800" />
         </a>
       ))
     }
@@ -65,15 +64,16 @@ const districtData: Record<string, { href: string; name: string }> =
 <style>
   :global([data-district-id]) {
     cursor: pointer;
-    transition: fill 0.2s ease;
   }
 
   :global(.s-active) {
     fill: #5246ef !important;
+    transition: fill 0.5s ease;
   }
 
   :global(.s-active:hover) {
     fill: #93c5fd !important;
+    transition: fill 0.2s ease;
   }
 
   :global(text) {
@@ -87,8 +87,12 @@ const districtData: Record<string, { href: string; name: string }> =
     const district = districtData[el.dataset.districtId];
     if (!district) return;
 
-    el.classList.add("s-active");
-    el.setAttribute("aria-label", `Obvod ${el.dataset.districtId} – ${district.name}`);
+    setTimeout(() => el.classList.add("s-active"), Math.random() * 1000);
+
+    el.setAttribute(
+      "aria-label",
+      `Obvod ${el.dataset.districtId} – ${district.name}`,
+    );
     el.setAttribute("tabindex", "0");
     el.setAttribute("role", "link");
 
