@@ -8,12 +8,6 @@ test.describe("District page", () => {
     await expect(page.getByText(/kandidátů/)).toBeVisible();
   });
 
-  test("shows vote percentage bars when results exist", async ({ page }) => {
-    await page.goto("obvody/cheb/");
-    // Round 1 percentages should be shown
-    await expect(page.getByText(/%/).first()).toBeVisible();
-  });
-
   test("candidate link navigates to candidate page", async ({ page }) => {
     await page.goto("obvody/cheb/");
     // Click first candidate

@@ -89,6 +89,7 @@ const districtData: Record<string, { href: string; name: string }> =
 
     setTimeout(() => el.classList.add("s-active"), Math.random() * 1000);
 
+    el.dataset.href = district.href;
     el.setAttribute(
       "aria-label",
       `Obvod ${el.dataset.districtId} – ${district.name}`,

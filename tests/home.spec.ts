@@ -32,14 +32,14 @@ test.describe("Home page", () => {
 
   test("legend link navigates to district page", async ({ page }) => {
     await page.goto("");
-    await page.locator('a[href$="obvod/3/"]').last().click();
-    await expect(page).toHaveURL(/\/obvod\/3\//);
+    await page.locator('a[href$="obvody/cheb/"]').last().click();
+    await expect(page).toHaveURL(/\/obvody\/cheb\//);
     await expect(page.getByRole("heading", { name: /Cheb/ })).toBeVisible();
   });
 
   test("active SVG region has correct href", async ({ page }) => {
     await page.goto("");
     const region = page.locator('.s-active[aria-label="Obvod 3 – Cheb"]');
-    await expect(region).toHaveAttribute("data-href", /obvod\/3\//);
+    await expect(region).toHaveAttribute("data-href", /obvody\/cheb\//);
   });
 });

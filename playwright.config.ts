@@ -15,15 +15,18 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        launchOptions: {
-          executablePath:
-            "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
-        },
+        ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+          ? {
+              launchOptions: {
+                executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+              },
+            }
+          : {}),
       },
     },
   ],
   webServer: {
-    command: "npm run build && npm run preview -- --port 4322",
+    command: "pnpm run build && pnpm run preview -- --port 4322",
     url: "http://localhost:4322/project-senat/",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

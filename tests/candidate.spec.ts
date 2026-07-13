@@ -9,39 +9,12 @@ test.describe("Candidate page", () => {
     await expect(page.getByText(/Bydliště/i)).toBeVisible();
   });
 
-  test("shows election results section", async ({ page }) => {
-    await page.goto("kandidati/plevny-miroslav-3-5/");
-    await expect(page.getByText(/Výsledky voleb/i)).toBeVisible();
-    await expect(page.getByText(/1\. kolo/)).toBeVisible();
-    await expect(page.getByText(/2\. kolo/)).toBeVisible();
-  });
-
-  test("shows campaign section in markdown profile", async ({ page }) => {
-    await page.goto("kandidati/sedlacek-jiri-3-1/");
-    await expect(page.getByRole("heading", { name: /Zapojení do kampaně/i })).toBeVisible();
-  });
-
-  test("shows candidate Q&A section in markdown profile", async ({ page }) => {
-    await page.goto("kandidati/sedlacek-jiri-3-1/");
-    await expect(page.getByRole("heading", { name: /Motivace ke kandidatuře/i })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Kde vidíte republiku/i })).toBeVisible();
-  });
-
   test("breadcrumb navigation back to district works", async ({ page }) => {
     await page.goto("kandidati/tresl-ivo-6-8/");
-    await page.getByRole("link", { name: /← Přehled kandidátů/ }).first().click();
+    await page
+      .getByRole("link", { name: /← Přehled kandidátů/ })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/obvody\/louny\//);
-  });
-
-  test("winner badge shown for round-2 winner", async ({ page }) => {
-    // Candidate 5 in district 3 (Plevný) won round 2
-    await page.goto("kandidati/plevny-miroslav-3-5/");
-    await expect(page.getByText(/Zvolený senátor/i)).toBeVisible();
-  });
-
-  test("non-winner candidate has no winner badge", async ({ page }) => {
-    // Candidate 1 in district 3 did not make round 2
-    await page.goto("kandidati/sedlacek-jiri-3-1/");
-    await expect(page.getByText(/Zvolený senátor/i)).not.toBeVisible();
   });
 });

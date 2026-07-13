@@ -10,7 +10,9 @@
     "astro": "astro",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "cli": "node ./src/bin/cli.ts"
+    "cli": "node ./src/bin/cli.ts",
+    "playwright:install": "playwright install --with-deps",
+    "playwright:test-local": "playwright test"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.19",
