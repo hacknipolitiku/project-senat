@@ -1,0 +1,255 @@
+{
+  "meta": {
+    "fetchedAt": "2026-07-13T10:25:40.174Z"
+  },
+  "titulPred": null,
+  "jmeno": "David",
+  "prijmeni": "Smoljak",
+  "titulPo": null,
+  "narozeni": "1959-02-08T00:00:00",
+  "nameId": "david-smoljak",
+  "profile": "/osoba/david-smoljak",
+  "politickaStrana": "STAN",
+  "sponzoring": [
+    {
+      "typ": "sponzor",
+      "organizace": "STAN",
+      "role": null,
+      "castka": 67000,
+      "datumOd": "2019-01-01T00:00:00",
+      "datumDo": "2019-01-01T00:00:00"
+    },
+    {
+      "typ": "sponzor",
+      "organizace": "STAN",
+      "role": null,
+      "castka": 80000,
+      "datumOd": "2020-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "sponzor",
+      "organizace": "Česká pirátská strana",
+      "role": null,
+      "castka": 0,
+      "datumOd": "2021-01-01T00:00:00",
+      "datumDo": "2021-01-01T00:00:00"
+    },
+    {
+      "typ": "sponzor",
+      "organizace": "Česká pirátská strana",
+      "role": null,
+      "castka": 400,
+      "datumOd": "2021-01-01T00:00:00",
+      "datumDo": "2021-01-01T00:00:00"
+    },
+    {
+      "typ": "sponzor",
+      "organizace": "STAN",
+      "role": null,
+      "castka": 50000,
+      "datumOd": "2024-01-01T00:00:00",
+      "datumDo": "2024-01-01T00:00:00"
+    }
+  ],
+  "udalosti": [
+    {
+      "typ": "Volená funkce",
+      "organizace": "Senát PČR",
+      "role": "senátor",
+      "castka": null,
+      "datumOd": "2019-04-13T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Politická exekutivní",
+      "organizace": "Rada MČ Praha-Vinoř",
+      "role": "radní",
+      "castka": null,
+      "datumOd": "2018-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Senátorský Klub Starostové a nezávislí",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2019-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro sdělovací prostředky",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2019-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Výbor pro vzdělávání, vědu, kulturu, lidská práva a petice - Senát PČR",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2019-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Politická",
+      "organizace": "nezávislý kandidát za Sdružení pro Vinoř ve volbách do zastupitelstva městské části Praha-Vinoř",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2010-01-01T00:00:00",
+      "datumDo": "2010-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "nezávislý kandidát za STAN ve volbách do Poslanecké sněmovny Parlamentu ČR",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2017-01-01T00:00:00",
+      "datumDo": "2017-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "nezávislý kandidát za Sdružení pro Vinoř ve volbách do zastupitelstva městské části Praha-Vinoř",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2018-01-01T00:00:00",
+      "datumDo": "2018-12-31T00:00:00"
+    },
+    {
+      "typ": "Volená funkce",
+      "organizace": "Zastupitelstvo MČ Praha-Vinoř",
+      "role": "zastupitel",
+      "castka": null,
+      "datumOd": "2014-11-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Politická",
+      "organizace": "nezávislý kandidát za Sdružení pro Vinoř ve volbách do zastupitelstva městské části Praha-Vinoř",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2014-01-01T00:00:00",
+      "datumDo": "2014-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "nezávislý kandidát STAN ve volbách do Senátu PČR",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2019-01-01T00:00:00",
+      "datumDo": "2019-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát STAN, TOP 09 a Pirátů ve volbách do Senátu PČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2020-01-01T00:00:00",
+      "datumDo": "2020-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická strana",
+      "organizace": "STAN",
+      "role": "člen strany",
+      "castka": null,
+      "datumOd": "2020-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát STAN (ve spolupráci s TOP 09) ve volbách do zastupitelstva hlavního města Prahy",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "2018-01-01T00:00:00",
+      "datumDo": "2018-12-31T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Týdeník Reflex",
+      "role": " redaktor, komentátor, vedoucí kultury",
+      "castka": null,
+      "datumOd": "1992-01-01T00:00:00",
+      "datumDo": "1993-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "TV Nova",
+      "role": " dramaturg publicistiky",
+      "castka": null,
+      "datumOd": "1993-01-01T00:00:00",
+      "datumDo": "1996-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "TV Prima",
+      "role": "dramaturg a šéfredaktor zábavy ",
+      "castka": null,
+      "datumOd": "1996-01-01T00:00:00",
+      "datumDo": "2001-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "OSVČ",
+      "role": "podnikatel",
+      "castka": null,
+      "datumOd": "1998-01-01T00:00:00",
+      "datumDo": "2008-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Výbor pro záležitosti Evropské unie - Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2020-01-01T00:00:00",
+      "datumDo": "2022-01-18T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro sdělovací prostředky - Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2020-11-11T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Výbor pro záležitosti Evropské unie - Senát PČR",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "2022-01-19T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Volební komise - Senát PČR",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2020-11-11T00:00:00",
+      "datumDo": null
+    }
+  ],
+  "socialniSite": [
+    {
+      "type": "Facebook_page",
+      "id": "smoljakdavid",
+      "url": "https://www.facebook.com/smoljakdavid"
+    },
+    {
+      "type": "Facebook_profile",
+      "id": "david.smoljak",
+      "url": "https://www.facebook.com/david.smoljak"
+    },
+    {
+      "type": "Twitter",
+      "id": "DavidSmoljak",
+      "url": "https://twitter.com/DavidSmoljak"
+    },
+    {
+      "type": "WWW",
+      "id": "www.davidsmoljak.cz",
+      "url": "www.davidsmoljak.cz"
+    }
+  ]
+}

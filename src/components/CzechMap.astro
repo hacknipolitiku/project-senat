@@ -1,77 +1,15 @@
 ---
-import fs from 'node:fs';
-import path from 'node:path';
-import { DISTRICTS, getDistricts, districtSlug } from '../lib/data';
+import { getCollection } from "astro:content";
+import { getProcessedMapSvg } from "../lib/map";
+import { getDistrictUrl } from "../lib/links";
 
-const base = import.meta.env.BASE_URL;
-
-// Mapping from district ID → SVG path element ID (matched via point-in-polygon)
-const DISTRICT_PATH: Record<number, string> = {
-  3:  'path3593',
-  6:  'path3561',
-  9:  'path3721',
-  12: 'path3649',
-  15: 'path3657',
-  18: 'path3603',
-  21: 'path3755',
-  24: 'path3765',
-  27: 'path3769',
-  30: 'path3545',
-  33: 'path3010',
-  36: 'path3517',
-  39: 'path3515',
-  42: 'path3565',
-  45: 'path3527',
-  48: 'path3555',
-  51: 'path3619',
-  54: 'path3659',
-  57: 'path3637',
-  60: 'path3731',
-  63: 'path3613',
-  66: 'path3599',
-  69: 'path3611',
-  72: 'path3743',
-  75: 'path3581',
-  78: 'path3633',
-  81: 'path3651',
-};
-
-// Load and process SVG at build time
-let svg = fs.readFileSync(
-  path.resolve(process.cwd(), 'data-raw/senate-map.svg'),
-  'utf-8'
-);
-
-// Strip XML declaration, replace fixed dimensions with a responsive viewBox
-svg = svg.replace(/<\?xml[^>]+\?>\s*/, '');
-svg = svg.replace(/(\swidth=")([\d.]+)"/, (_m, _p, w) => {
-  const h = svg.match(/\sheight="([\d.]+)"/)?.[1] ?? '2990.762';
-  return ` viewBox="0 0 ${w} ${h}"`;
-});
-svg = svg.replace(/\sheight="[^"]*"/, '');
-
-// Remove district number labels
-// TODO: Do the edits directly in the map - only keep the city names, remove fonts
-// TODO: Order the cities in west-east order
-svg = svg.replace(/<text[\s\S]*?\d+<\/tspan><\/text>/g, '');
-svg = svg.replace(/<text[\s\S]*?OBVODY<\/tspan><\/text>/g, '');
-
-// Inject class + data-href on each active district path
-for (const [idStr] of Object.entries(DISTRICTS)) {
-  const id = parseInt(idStr);
-  const pathId = DISTRICT_PATH[id];
-  if (!pathId) continue;
-  const href = `${base}obvody/${districtSlug(DISTRICTS[id])}/`;
-  svg = svg.replace(
-    new RegExp(`(\\sid="${pathId}")`),
-    ` class="s-active" data-href="${href}" aria-label="Obvod ${id} – ${DISTRICTS[id]}"$1`
-  );
-}
-
-// TODO: This part should not be part of the map component
-const districts = getDistricts();
-const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 0);
-
+const svg = getProcessedMapSvg();
+const [allCandidates, districtEntries] = await Promise.all([
+  getCollection("candidates"),
+  getCollection("districts"),
+]);
+const totalCandidates = allCandidates.length;
+const sortedDistricts = districtEntries.sort((a, b) => a.data.id - b.data.id);
 ---
 
 <div class="w-full">
@@ -81,29 +19,31 @@ const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 
 
   <!-- Legend -->
   <p class="text-gray-500 mt-12">
-    {districts.length} obvodů · {totalCandidates} kandidátů
+    {sortedDistricts.length} obvodů · {totalCandidates} kandidátů
   </p>
-  <div class="mt-3 grid grid-flow-col auto-cols-fr grid-rows-100 sm:grid-rows-14 md:grid-rows-9 lg:grid-rows-7  gap-2 text-sm">
-    {Object.entries(DISTRICTS).map(([idStr, name]) => {
-      const id = parseInt(idStr);
-      return (
+  <div
+    class="mt-3 grid grid-flow-col auto-cols-fr grid-rows-100 sm:grid-rows-14 md:grid-rows-9 lg:grid-rows-7 gap-2 text-sm"
+  >
+    {
+      sortedDistricts.map((d) => (
         <a
-          href={`${base}obvody/${districtSlug(name)}/`}
+          href={getDistrictUrl(d.data.name)}
           class="flex items-center gap-2 px-3 py-2 rounded border transition-colors hover:bg-blue-50"
-          /* TODO: Do this with styles */
           style="border-color: #9394D2;"
         >
           <span
             class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold shrink-0"
             style="background-color: #2a2b66; color: white;"
           >
-            {id}
+            {d.data.id}
           </span>
-          <span style="color: #2a2b66;" class="truncate">{name}</span>
-          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800"></span>
+          <span style="color: #2a2b66;" class="truncate">
+            {d.data.name}
+          </span>
+          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800" />
         </a>
-      );
-    })}
+      ))
+    }
   </div>
 </div>
 
@@ -111,12 +51,11 @@ const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 
   :global(.s-active) {
     cursor: pointer;
     transition: fill 0.2s ease;
-    fill: #5246EF !important;
+    fill: #5246ef !important;
 
     /* stroke: black; */
     /* stroke-width: 10px; */
   }
-
 
   /* It would be nicer to do this differently */
   :global(text) {
@@ -129,18 +68,18 @@ const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 
 </style>
 
 <script>
-  document.querySelectorAll<SVGElement>('.s-active').forEach((el) => {
-    el.addEventListener('click', () => {
+  document.querySelectorAll<SVGElement>(".s-active").forEach((el) => {
+    el.addEventListener("click", () => {
       const href = el.dataset.href;
       if (href) location.href = href;
     });
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
         const href = el.dataset.href;
         if (href) location.href = href;
       }
     });
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('role', 'link');
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "link");
   });
 </script>

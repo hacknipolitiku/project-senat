@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Converts data-raw/vsichni-platni-kandidati.csv into:
- *   data/profiles/{obvod}/{č}.md  — markdown profile with YAML frontmatter
+ *   data/candidates/{slug}.md  — markdown profile with YAML frontmatter
  *
  * Frontmatter fields are always updated from the CSV.
  * The markdown body is preserved when the file already exists.
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(fileURLToPath(import.meta.url), "../../");
 const csvPath = path.join(root, "data-raw/vsichni-platni-kandidati.csv");
-const profilesDir = path.join(root, "data/profiles");
+const profilesDir = path.join(root, "data/candidates");
 
 function slugify(s) {
   return s

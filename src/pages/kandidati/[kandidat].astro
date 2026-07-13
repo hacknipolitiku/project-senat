@@ -1,43 +1,57 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { getCandidates, getDistrict, formatCzechName, getPartyLogoFiles, districtSlug } from '../../lib/data';
-import { marked } from 'marked';
-import fs from 'node:fs';
-import path from 'node:path';
+import Layout from "../../layouts/Layout.astro";
+import { getCollection, render } from "astro:content";
+import { formatCzechName, getPartyLogoFiles } from "../../lib/data";
+import { getDistrictUrl, getPartyLogoUrl } from "../../lib/links";
 
 export async function getStaticPaths() {
-  return getCandidates().map((c) => ({
-    params: { kandidat: c.slug },
-  }));
+  const [candidateEntries, districtEntries] = await Promise.all([
+    getCollection("candidates"),
+    getCollection("districts"),
+  ]);
+  return candidateEntries.map((entry) => {
+    const districtCandidates = candidateEntries.filter(
+      (e) => e.data.districtId === entry.data.districtId,
+    );
+    const district = districtEntries.find(
+      (d) => d.data.id === entry.data.districtId,
+    );
+    return {
+      params: { kandidat: entry.id },
+      props: { entry, districtCandidates, district },
+    };
+  });
 }
 
-const { kandidat } = Astro.params;
-const candidates = getCandidates();
-const candidate = candidates.find((c) => c.slug === kandidat);
-if (!candidate) return Astro.redirect('/');
+const { entry, districtCandidates, district } = Astro.props;
+const { Content } = await render(entry);
 
-const district = getDistrict(candidate.districtId);
-if (!district) return Astro.redirect('/');
+const districtId = entry.data.districtId;
+const districtName = district?.data.name ?? "";
 
-const base = import.meta.env.BASE_URL;
-
-const round2Candidates = district.candidates.filter((c) => c.round2Votes > 0);
-const winner = round2Candidates.length > 0
-  ? round2Candidates.sort((a, b) => b.round2Votes - a.round2Votes)[0]
-  : null;
-const isWinner = winner?.candidateNumber === candidate.candidateNumber;
-const hasResults = district.candidates.some((c) => c.round1Votes > 0);
-const displayName = formatCzechName(candidate.name);
-const birthYear = 2026 - candidate.age;
-const partyLogos = getPartyLogoFiles(candidate.electoralParty);
-const profilePath = path.resolve(process.cwd(), `data/profiles/${candidate.slug}.md`);
-const rawMd = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, 'utf-8') : '';
-const profileMd = rawMd.replace(/^---\n[\s\S]*?\n---\n?/, '');
+const round2Candidates = districtCandidates.filter((c) => c.data.round2Votes > 0);
+const winner =
+  round2Candidates.length > 0
+    ? round2Candidates.sort((a, b) => b.data.round2Votes - a.data.round2Votes)[0]
+    : null;
+const isWinner = winner?.data.candidateNumber === entry.data.candidateNumber;
+const hasResults = districtCandidates.some((c) => c.data.round1Votes > 0);
+const displayName = formatCzechName(entry.data.name);
+const birthYear = 2026 - entry.data.age;
+const partyLogos = getPartyLogoFiles(entry.data.electoralParty);
 ---
-<Layout title={displayName} description={`${displayName} – kandidát v obvodu ${district.id} ${district.name}`}>
+
+<Layout
+  title={displayName}
+  description={`${displayName} – kandidát v obvodu ${districtId} ${districtName}`}
+>
   <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6">
-    <a href={`${base}obvody/${districtSlug(district.name)}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
+    <a
+      href={getDistrictUrl(districtName)}
+      class="font-semibold transition-opacity hover:opacity-70"
+      style="color: #2a2b66;">← Přehled kandidátů</a
+    >
   </nav>
 
   <div class="mb-8">
@@ -47,83 +61,129 @@ const profileMd = rawMd.replace(/^---\n[\s\S]*?\n---\n?/, '');
           class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
           style="background-color: #2a2b66; color: white; border: 3px solid #fa1a5b;"
         >
-          {candidate.candidateNumber}
+          {entry.data.candidateNumber}
         </div>
       </div>
       <div>
         <div class="flex items-center gap-2 flex-wrap">
           <h1 class="text-3xl font-bold text-gray-900">{displayName}</h1>
         </div>
-        <p class="text-gray-500 mt-1">Obvod {district.id} · {district.name}</p>
+        <p class="text-gray-500 mt-1">Obvod {districtId} · {districtName}</p>
       </div>
     </div>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <section class="rounded-lg p-5" style="border: 1px solid #2a2b6630;">
-      <h2 class="text-xs font-semibold uppercase tracking-wide mb-4" style="color: #2a2b66;">Základní informace</h2>
+      <h2
+        class="text-xs font-semibold uppercase tracking-wide mb-4"
+        style="color: #2a2b66;"
+      >
+        Základní informace
+      </h2>
       <dl class="space-y-3">
         <div class="flex justify-between gap-4">
           <dt class="text-sm text-gray-500">Věk</dt>
-          <dd class="text-sm font-medium text-gray-900">*{birthYear} ({candidate.age} let)</dd>
+          <dd class="text-sm font-medium text-gray-900">
+            *{birthYear} ({entry.data.age} let)
+          </dd>
         </div>
         <div class="flex justify-between gap-4 items-center">
           <dt class="text-sm text-gray-500">Volební strana</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right flex items-center gap-2 flex-wrap justify-end">
-            {partyLogos.length > 0
-              ? partyLogos.map((logo) => (
-                  <img src={`${base}logos/${logo}`} alt={logo.replace('.svg','')} class="h-6 w-auto" />
-                ))
-              : candidate.electoralParty
+          <dd
+            class="text-sm font-medium text-gray-900 text-right flex items-center gap-2 flex-wrap justify-end"
+          >
+            {
+              partyLogos.length > 0
+                ? partyLogos.map((logo) => (
+                    <img
+                      src={getPartyLogoUrl(logo)}
+                      alt={logo.replace(".svg", "")}
+                      class="h-6 w-auto"
+                    />
+                  ))
+                : entry.data.electoralParty
             }
           </dd>
         </div>
         <div class="flex justify-between gap-4">
           <dt class="text-sm text-gray-500">Politická příslušnost</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.politicalAffiliation}</dd>
+          <dd class="text-sm font-medium text-gray-900 text-right">
+            {entry.data.politicalAffiliation}
+          </dd>
         </div>
         <div class="flex justify-between gap-4">
           <dt class="text-sm text-gray-500">Povolání</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.occupation}</dd>
+          <dd class="text-sm font-medium text-gray-900 text-right">
+            {entry.data.occupation}
+          </dd>
         </div>
         <div class="flex justify-between gap-4">
           <dt class="text-sm text-gray-500">Bydliště</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.residence}</dd>
+          <dd class="text-sm font-medium text-gray-900 text-right">
+            {entry.data.residence}
+          </dd>
         </div>
 
         <div class="flex justify-between gap-4">
           <dt class="text-sm text-gray-500">Hlídač státu</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right">{candidate.hlidacStatuUrl ? <a href={candidate.hlidacStatuUrl} target="_blank" rel="noopener noreferrer">{candidate.hlidacStatuUrl}</a> : 'N/A'}</dd>
+          <dd class="text-sm font-medium text-gray-900 text-right">
+            {
+              entry.data.hlidacStatuUrl ? (
+                <a
+                  href={entry.data.hlidacStatuUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {entry.data.hlidacStatuUrl}
+                </a>
+              ) : (
+                "N/A"
+              )
+            }
+          </dd>
         </div>
       </dl>
     </section>
 
-    <section class="rounded-lg p-5 pulse-card" style="border: 1px solid #2a2b6630;">
-      <h2 class="text-xl font-semibold uppercase tracking-wide mb-4" style="color: #2a2b66;">Jak se zapojit</h2>
-      {profileMd && (
-        <div class="profile-content prose prose-sm max-w-none text-gray-700 mt-6"
-          set:html={marked.parse(profileMd)} />
-      )}
+    <section
+      class="rounded-lg p-5 pulse-card"
+      style="border: 1px solid #2a2b6630;"
+    >
+      <h2
+        class="text-xl font-semibold uppercase tracking-wide mb-4"
+        style="color: #2a2b66;"
+      >
+        Jak se zapojit
+      </h2>
+      <div class="profile-content prose prose-sm max-w-none text-gray-700 mt-6">
+        <Content />
+      </div>
     </section>
   </div>
 
-    <!-- The back button on bottom is only visible on mobile -->
+  <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6 mt-12 sm:hidden">
-    <a href={`${base}obvody/${districtSlug(district.name)}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
+    <a
+      href={getDistrictUrl(districtName)}
+      class="font-semibold transition-opacity hover:opacity-70"
+      style="color: #2a2b66;">← Přehled kandidátů</a
+    >
   </nav>
-
-
 </Layout>
 
 <style>
   @keyframes pulse-border {
-    0%, 100% {
-      box-shadow: 0 0 0 0 rgba(99,102,241,0.7),
-                  0 0 0 0 rgba(99,102,241,0.4);
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(99, 102, 241, 0.7),
+        0 0 0 0 rgba(99, 102, 241, 0.4);
     }
     50% {
-      box-shadow: 0 0 0 8px rgba(99,102,241,0.2),
-                  0 0 0 16px rgba(99,102,241,0);
+      box-shadow:
+        0 0 0 8px rgba(99, 102, 241, 0.2),
+        0 0 0 16px rgba(99, 102, 241, 0);
     }
   }
 

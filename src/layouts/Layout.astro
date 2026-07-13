@@ -1,12 +1,12 @@
 ---
 import '../styles/global.css';
+import { getFaviconUrl, getHomepageUrl } from '../lib/links';
 
 interface Props {
   title: string;
   description?: string;
 }
 const { title, description = 'Přehled kandidátů do Senátu ČR 2026' } = Astro.props;
-const base = import.meta.env.BASE_URL;
 ---
 <!doctype html>
 <html lang="cs">
@@ -15,16 +15,16 @@ const base = import.meta.env.BASE_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title} – Senátní volby 2026</title>
-    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href={getFaviconUrl()} />
   </head>
   <body class="min-h-screen bg-white text-gray-900 font-sans flex flex-col">
     <header style="background-color: #2a2b66;">
       <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-        <a href={base} class="transition-opacity hover:opacity-80 flex items-center gap-2">
+        <a href={getHomepageUrl()} class="transition-opacity hover:opacity-80 flex items-center gap-2">
           <img src="https://milionchvilek.cz/assets/icons/header_logo.svg" alt="Milion chvilek" class="h-8 w-auto" />
         </a>
         <span style="color: #fa1a5b; font-size: 1.25rem;">|</span>
-        <a href={base} class="font-semibold text-lg tracking-tight transition-opacity hover:opacity-80" style="color: white;">
+        <a href={getHomepageUrl()} class="font-semibold text-lg tracking-tight transition-opacity hover:opacity-80" style="color: white;">
           <span style="color: #fa1a5b;">pomoz</span>mi<span style="color: #fa1a5b;">do</span>senatu</span>.cz
         </a>
       </div>
