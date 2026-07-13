@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getDistrictUrl } from "./links";
 
+// SVG path element IDs for the 27 active districts (from the source SVG).
 const DISTRICT_PATH: Record<number, string> = {
   3:  "path3593",
   6:  "path3561",
@@ -32,13 +32,16 @@ const DISTRICT_PATH: Record<number, string> = {
   81: "path3651",
 };
 
-type DistrictData = { id: number; name: string; slug: string };
-
-export function getProcessedMapSvg(): string {
-  let svg = fs.readFileSync(
-    path.resolve(process.cwd(), "data-raw/senate-map.svg"),
-    "utf-8"
-  );
+/**
+ * One-time preprocessing: reads data-raw/senate-map.svg, cleans it up,
+ * stamps data-district-id on each active district path, and writes the
+ * result to public/senate-map.svg.
+ *
+ * Run via: pnpm cli map:process
+ */
+export function processMapSvg(): void {
+  const root = process.cwd();
+  let svg = fs.readFileSync(path.resolve(root, "data-raw/senate-map-wikipedia.svg"), "utf-8");
 
   svg = svg.replace(/<\?xml[^>]+\?>\s*/, "");
   svg = svg.replace(/(\swidth=")([\d.]+)"/, (_m, _p, w) => {
@@ -46,23 +49,17 @@ export function getProcessedMapSvg(): string {
     return ` viewBox="0 0 ${w} ${h}"`;
   });
   svg = svg.replace(/\sheight="[^"]*"/, "");
-
   svg = svg.replace(/<text[\s\S]*?\d+<\/tspan><\/text>/g, "");
   svg = svg.replace(/<text[\s\S]*?OBVODY<\/tspan><\/text>/g, "");
 
-  const districts: DistrictData[] = JSON.parse(
-    fs.readFileSync(path.resolve(process.cwd(), "data/districts.json"), "utf-8")
-  );
-
-  for (const { id, name } of districts) {
-    const pathId = DISTRICT_PATH[id];
-    if (!pathId) continue;
-    const href = getDistrictUrl(name);
+  for (const [id, pathId] of Object.entries(DISTRICT_PATH)) {
     svg = svg.replace(
       new RegExp(`(\\sid="${pathId}")`),
-      ` class="s-active" data-href="${href}" aria-label="Obvod ${id} – ${name}"$1`
+      ` data-district-id="${id}"$1`,
     );
   }
 
-  return svg;
+  const outPath = path.resolve(root, "public/senate-map.svg");
+  fs.writeFileSync(outPath, svg);
+  console.log(`Written → ${outPath}`);
 }

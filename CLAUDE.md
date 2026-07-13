@@ -25,6 +25,7 @@ npx playwright test --grep "district"   # filter by name
 ## Architecture
 
 Three pages, all statically generated at build time:
+
 - `src/pages/index.astro` — home with interactive SVG map and district legend
 - `src/pages/obvody/[obvod].astro` — district detail listing candidates (`/obvody/decin/`)
 - `src/pages/kandidati/[kandidat].astro` — candidate detail (`/kandidati/sedlacek-jiri-3-1/`)
@@ -33,7 +34,9 @@ Data is served via **Astro Content Collections** (`src/content.config.ts`): `can
 
 ## SVG map
 
-`src/components/CzechMap.astro` reads `data-raw/senate-map.svg` at build time, strips fixed dimensions, removes text labels, then injects `class="s-active"` and `data-href` onto each of the 27 active district `<path>` elements (matched via a hardcoded `DISTRICT_PATH` map of district ID → SVG `path` element ID). Click navigation is wired via inline `<script>` in the component.
+`public/senate-map.svg` is a preprocessed version of `data-raw/senate-map.svg` (the original is never modified). Generate it once with `pnpm cli map:process` — it strips fixed dimensions, removes text labels, and stamps `data-district-id="{id}"` on each of the 27 active district `<path>` elements (matched via a hardcoded `DISTRICT_PATH` map in `src/lib/map.ts`).
+
+At build time `CzechMap.astro` reads and inlines `public/senate-map.svg`. A client-side `<script>` then adds `.s-active` and wires click/keyboard navigation using `data-district-id` and the district slug map passed via `define:vars`.
 
 ## Data pipeline
 
@@ -44,6 +47,7 @@ Run `pnpm cli csv:import <path-to-csv>` to regenerate `data/candidates/{slug}.md
 Profile filename format: `{surname-slug}-{firstname-slug}-{districtId}-{candidateNumber}.md`, e.g. `sedlacek-jiri-3-1.md`. The entry `id` in the collection equals this slug (filename without `.md`).
 
 Profile file format:
+
 ```
 ---
 districtId: 3
@@ -56,9 +60,11 @@ Body text here (campaign info, Q&A with ## headings)
 ```
 
 CLI commands (`pnpm cli <command>`):
+
+- `map:process` — generate `public/senate-map.svg` from `data-raw/senate-map.svg` (run once after SVG source changes)
 - `csv:import <csv>` — import/update candidate profiles from a CSV file
 - `hlidac-statu:osoba <osoba-id> [-s]` — fetch a single person from Hlídač státu (requires `HLIDAC_STATU_TOKEN`)
-- `hlidac-statu:refetch` — re-fetch all persons whose profile has `hlidacStatuOsobaId` set
+- `hlidac-statu:import` — re-fetch all persons whose profile has `hlidacStatuOsobaId` set
 
 ## Key conventions
 

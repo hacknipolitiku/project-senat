@@ -1,5 +1,3 @@
-import { districtSlug } from "./data";
-
 const base = import.meta.env.BASE_URL;
 
 export function getHomepageUrl(): string {
@@ -10,8 +8,8 @@ export function getFaviconUrl(): string {
   return `${base}favicon.svg`;
 }
 
-export function getDistrictUrl(districtName: string): string {
-  return `${base}obvody/${districtSlug(districtName)}/`;
+export function getDistrictUrl(slug: string): string {
+  return `${base}obvody/${slug}/`;
 }
 
 export function getCandidateUrl(candidateSlug: string): string {

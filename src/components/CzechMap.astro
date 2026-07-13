@@ -1,15 +1,29 @@
 ---
 import { getCollection } from "astro:content";
-import { getProcessedMapSvg } from "../lib/map";
 import { getDistrictUrl } from "../lib/links";
+import fs from "node:fs";
+import path from "node:path";
 
-const svg = getProcessedMapSvg();
+const svg = fs.readFileSync(
+  path.resolve(process.cwd(), "public/senate-map.svg"),
+  "utf-8",
+);
+
 const [allCandidates, districtEntries] = await Promise.all([
   getCollection("candidates"),
   getCollection("districts"),
 ]);
 const totalCandidates = allCandidates.length;
 const sortedDistricts = districtEntries.sort((a, b) => a.data.id - b.data.id);
+
+// Passed to the client script so it can set hrefs and aria-labels.
+const districtData: Record<string, { href: string; name: string }> =
+  Object.fromEntries(
+    districtEntries.map((d) => [
+      String(d.data.id),
+      { href: getDistrictUrl(d.data.slug), name: d.data.name },
+    ]),
+  );
 ---
 
 <div class="w-full">
@@ -27,7 +41,7 @@ const sortedDistricts = districtEntries.sort((a, b) => a.data.id - b.data.id);
     {
       sortedDistricts.map((d) => (
         <a
-          href={getDistrictUrl(d.data.name)}
+          href={getDistrictUrl(d.data.slug)}
           class="flex items-center gap-2 px-3 py-2 rounded border transition-colors hover:bg-blue-50"
           style="border-color: #9394D2;"
         >
@@ -40,7 +54,8 @@ const sortedDistricts = districtEntries.sort((a, b) => a.data.id - b.data.id);
           <span style="color: #2a2b66;" class="truncate">
             {d.data.name}
           </span>
-          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800" />
+          <span class="ml-auto w-2 h-2 border-t-2 border-l-2 transform rotate-135 border-gray-800"
+          ></span>
         </a>
       ))
     }
@@ -48,38 +63,40 @@ const sortedDistricts = districtEntries.sort((a, b) => a.data.id - b.data.id);
 </div>
 
 <style>
-  :global(.s-active) {
+  :global([data-district-id]) {
     cursor: pointer;
     transition: fill 0.2s ease;
-    fill: #5246ef !important;
-
-    /* stroke: black; */
-    /* stroke-width: 10px; */
   }
 
-  /* It would be nicer to do this differently */
+  :global(.s-active) {
+    fill: #5246ef !important;
+  }
+
+  :global(.s-active:hover) {
+    fill: #93c5fd !important;
+  }
+
   :global(text) {
     font-family: var(--font-sans) !important;
     fill: #2a2b66;
   }
-  :global(.s-active:hover) {
-    fill: #93c5fd !important;
-  }
 </style>
 
-<script>
-  document.querySelectorAll<SVGElement>(".s-active").forEach((el) => {
-    el.addEventListener("click", () => {
-      const href = el.dataset.href;
-      if (href) location.href = href;
-    });
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        const href = el.dataset.href;
-        if (href) location.href = href;
-      }
-    });
+<script define:vars={{ districtData }}>
+  document.querySelectorAll("[data-district-id]").forEach((el) => {
+    const district = districtData[el.dataset.districtId];
+    if (!district) return;
+
+    el.classList.add("s-active");
+    el.setAttribute("aria-label", `Obvod ${el.dataset.districtId} – ${district.name}`);
     el.setAttribute("tabindex", "0");
     el.setAttribute("role", "link");
+
+    el.addEventListener("click", () => {
+      location.href = district.href;
+    });
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") location.href = district.href;
+    });
   });
 </script>
