@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export interface Candidate {
+  slug: string;
   districtId: number;
   candidateNumber: number;
   name: string;
@@ -54,6 +55,41 @@ export const DISTRICTS: Record<number, string> = {
   81: "Uherské Hradiště",
 };
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[áä]/g, "a")
+    .replace(/č/g, "c")
+    .replace(/ď/g, "d")
+    .replace(/[éě]/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ň/g, "n")
+    .replace(/[óö]/g, "o")
+    .replace(/ř/g, "r")
+    .replace(/š/g, "s")
+    .replace(/ť/g, "t")
+    .replace(/[úůü]/g, "u")
+    .replace(/ý/g, "y")
+    .replace(/ž/g, "z")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function districtSlug(name: string): string {
+  return slugify(name);
+}
+
+export function candidateFileSlug(rawName: string, districtId: number, candidateNumber: number): string {
+  const tokens = rawName.trim().split(/\s+/).map((t) => t.replace(/,+$/, ""));
+  const nameParts = tokens.filter((t) => !ALL_TITLES.has(t));
+  if (nameParts.length < 2) {
+    return `${slugify(rawName)}-${districtId}-${candidateNumber}`;
+  }
+  const surname = nameParts[0];
+  const firstName = nameParts[nameParts.length - 1];
+  return `${slugify(surname)}-${slugify(firstName)}-${districtId}-${candidateNumber}`;
+}
+
 function parseFrontmatter(content: string): Record<string, string> {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
   if (!match) return {};
@@ -74,41 +110,35 @@ function parseFrontmatter(content: string): Record<string, string> {
   return result;
 }
 
-let _candidates: Candidate[] | null = null;
-
 export function getCandidates(): Candidate[] {
-  if (_candidates) return _candidates;
   const profilesDir = path.resolve(process.cwd(), "data/profiles");
   const candidates: Candidate[] = [];
-  for (const districtDir of fs.readdirSync(profilesDir)) {
-    const districtPath = path.join(profilesDir, districtDir);
-    if (!fs.statSync(districtPath).isDirectory()) continue;
-    for (const file of fs.readdirSync(districtPath)) {
-      if (!file.endsWith(".md")) continue;
-      const content = fs.readFileSync(path.join(districtPath, file), "utf-8");
-      const fm = parseFrontmatter(content);
-      if (!fm.districtId) continue;
-      candidates.push({
-        districtId: parseInt(fm.districtId),
-        candidateNumber: parseInt(fm.candidateNumber),
-        name: fm.name ?? "",
-        age: parseInt(fm.age) || 0,
-        electoralParty: fm.electoralParty ?? "",
-        nominatingParty: fm.nominatingParty ?? "",
-        politicalAffiliation: fm.politicalAffiliation ?? "",
-        occupation: fm.occupation ?? "",
-        residence: fm.residence ?? "",
-        round1Votes: parseInt(fm.round1Votes) || 0,
-        round1Percent: parseFloat(fm.round1Percent) || 0,
-        round2Votes: parseInt(fm.round2Votes) || 0,
-        round2Percent: parseFloat(fm.round2Percent) || 0,
-        ...(fm.hlidacStatuUrl ? { hlidacStatuUrl: fm.hlidacStatuUrl } : {}),
-      });
-    }
+  for (const file of fs.readdirSync(profilesDir)) {
+    if (!file.endsWith(".md")) continue;
+    const slug = file.replace(/\.md$/, "");
+    const content = fs.readFileSync(path.join(profilesDir, file), "utf-8");
+    const fm = parseFrontmatter(content);
+    if (!fm.districtId) continue;
+    candidates.push({
+      slug,
+      districtId: parseInt(fm.districtId),
+      candidateNumber: parseInt(fm.candidateNumber),
+      name: fm.name ?? "",
+      age: parseInt(fm.age) || 0,
+      electoralParty: fm.electoralParty ?? "",
+      nominatingParty: fm.nominatingParty ?? "",
+      politicalAffiliation: fm.politicalAffiliation ?? "",
+      occupation: fm.occupation ?? "",
+      residence: fm.residence ?? "",
+      round1Votes: parseInt(fm.round1Votes) || 0,
+      round1Percent: parseFloat(fm.round1Percent) || 0,
+      round2Votes: parseInt(fm.round2Votes) || 0,
+      round2Percent: parseFloat(fm.round2Percent) || 0,
+      ...(fm.hlidacStatuUrl ? { hlidacStatuUrl: fm.hlidacStatuUrl } : {}),
+    });
   }
   candidates.sort((a, b) => a.districtId - b.districtId || a.candidateNumber - b.candidateNumber);
-  _candidates = candidates;
-  return _candidates;
+  return candidates;
 }
 
 export function getDistricts(): District[] {
@@ -124,6 +154,14 @@ export function getDistrict(id: number): District | undefined {
   const name = DISTRICTS[id];
   if (!name) return undefined;
   return { id, name, candidates: candidates.filter((c) => c.districtId === id) };
+}
+
+export function getDistrictBySlug(slug: string): District | undefined {
+  const entry = Object.entries(DISTRICTS).find(([, name]) => districtSlug(name) === slug);
+  if (!entry) return undefined;
+  const id = parseInt(entry[0]);
+  const candidates = getCandidates();
+  return { id, name: entry[1], candidates: candidates.filter((c) => c.districtId === id) };
 }
 
 export function getCandidate(districtId: number, candidateNumber: number): Candidate | undefined {
@@ -321,14 +359,8 @@ export interface ProfileSection {
   body: string;
 }
 
-export function getCandidateProfileSections(
-  districtId: number,
-  candidateNumber: number,
-): ProfileSection[] {
-  const profilePath = path.resolve(
-    process.cwd(),
-    `data/profiles/${districtId}/${candidateNumber}.md`,
-  );
+export function getCandidateProfileSections(slug: string): ProfileSection[] {
+  const profilePath = path.resolve(process.cwd(), `data/profiles/${slug}.md`);
   if (!fs.existsSync(profilePath)) return [];
   const md = fs.readFileSync(profilePath, "utf-8");
 

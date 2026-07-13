@@ -1,7 +1,7 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
-import { DISTRICTS, getDistricts } from '../lib/data';
+import { DISTRICTS, getDistricts, districtSlug } from '../lib/data';
 
 const base = import.meta.env.BASE_URL;
 
@@ -61,7 +61,7 @@ for (const [idStr] of Object.entries(DISTRICTS)) {
   const id = parseInt(idStr);
   const pathId = DISTRICT_PATH[id];
   if (!pathId) continue;
-  const href = `${base}obvod/${id}/`;
+  const href = `${base}obvody/${districtSlug(DISTRICTS[id])}/`;
   svg = svg.replace(
     new RegExp(`(\\sid="${pathId}")`),
     ` class="s-active" data-href="${href}" aria-label="Obvod ${id} – ${DISTRICTS[id]}"$1`
@@ -88,7 +88,7 @@ const totalCandidates = districts.reduce((sum, d) => sum + d.candidates.length, 
       const id = parseInt(idStr);
       return (
         <a
-          href={`${base}obvod/${id}/`}
+          href={`${base}obvody/${districtSlug(name)}/`}
           class="flex items-center gap-2 px-3 py-2 rounded border transition-colors hover:bg-blue-50"
           /* TODO: Do this with styles */
           style="border-color: #9394D2;"

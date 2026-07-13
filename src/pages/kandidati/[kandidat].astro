@@ -1,23 +1,23 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import { getCandidates, getDistrict, formatCzechName, getPartyLogoFiles } from '../../../lib/data';
+import Layout from '../../layouts/Layout.astro';
+import { getCandidates, getDistrict, formatCzechName, getPartyLogoFiles, districtSlug } from '../../lib/data';
 import { marked } from 'marked';
 import fs from 'node:fs';
 import path from 'node:path';
 
 export async function getStaticPaths() {
   return getCandidates().map((c) => ({
-    params: { obvod: String(c.districtId), kandidat: String(c.candidateNumber) },
+    params: { kandidat: c.slug },
   }));
 }
 
-const { obvod, kandidat } = Astro.params;
-const districtId = parseInt(obvod);
-const candidateNumber = parseInt(kandidat);
-const district = getDistrict(districtId);
-const candidate = district?.candidates.find((c) => c.candidateNumber === candidateNumber);
+const { kandidat } = Astro.params;
+const candidates = getCandidates();
+const candidate = candidates.find((c) => c.slug === kandidat);
+if (!candidate) return Astro.redirect('/');
 
-if (!candidate || !district) return Astro.redirect('/');
+const district = getDistrict(candidate.districtId);
+if (!district) return Astro.redirect('/');
 
 const base = import.meta.env.BASE_URL;
 
@@ -30,14 +30,14 @@ const hasResults = district.candidates.some((c) => c.round1Votes > 0);
 const displayName = formatCzechName(candidate.name);
 const birthYear = 2026 - candidate.age;
 const partyLogos = getPartyLogoFiles(candidate.electoralParty);
-const profilePath = path.resolve(process.cwd(), `data/profiles/${districtId}/${candidateNumber}.md`);
+const profilePath = path.resolve(process.cwd(), `data/profiles/${candidate.slug}.md`);
 const rawMd = fs.existsSync(profilePath) ? fs.readFileSync(profilePath, 'utf-8') : '';
 const profileMd = rawMd.replace(/^---\n[\s\S]*?\n---\n?/, '');
 ---
 <Layout title={displayName} description={`${displayName} – kandidát v obvodu ${district.id} ${district.name}`}>
   <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6">
-    <a href={`${base}obvod/${district.id}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
+    <a href={`${base}obvody/${districtSlug(district.name)}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
   </nav>
 
   <div class="mb-8">
@@ -109,10 +109,10 @@ const profileMd = rawMd.replace(/^---\n[\s\S]*?\n---\n?/, '');
 
     <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6 mt-12 sm:hidden">
-    <a href={`${base}obvod/${district.id}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
+    <a href={`${base}obvody/${districtSlug(district.name)}/`} class="font-semibold transition-opacity hover:opacity-70" style="color: #2a2b66;">← Přehled kandidátů</a>
   </nav>
 
-  
+
 </Layout>
 
 <style>

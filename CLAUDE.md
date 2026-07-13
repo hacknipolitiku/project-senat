@@ -26,10 +26,10 @@ npx playwright test --grep "district"   # filter by name
 
 Three pages, all statically generated at build time:
 - `src/pages/index.astro` — home with interactive SVG map and district legend
-- `src/pages/obvod/[id].astro` — district detail listing candidates
-- `src/pages/kandidat/[obvod]/[kandidat].astro` — candidate detail with markdown profile
+- `src/pages/obvody/[obvod].astro` — district detail listing candidates (`/obvody/decin/`)
+- `src/pages/kandidati/[kandidat].astro` — candidate detail (`/kandidati/sedlacek-jiri-3-1/`)
 
-All data comes from `src/lib/data.ts`, which reads `data/profiles/` at build time (no JSON file — profiles are the source of truth). Key exports: `getCandidates()`, `getDistricts()`, `getDistrict(id)`, `getCandidate(districtId, candidateNumber)`, `formatCzechName()`, `getPartyLogoFiles()`, `getCandidateProfileSections()`.
+All data comes from `src/lib/data.ts`, which reads `data/profiles/` at build time (no JSON file — profiles are the source of truth). Key exports: `getCandidates()`, `getDistricts()`, `getDistrict(id)`, `getCandidate(districtId, candidateNumber)`, `districtSlug(name)`, `candidateFileSlug(rawName, districtId, candidateNumber)`, `formatCzechName()`, `getPartyLogoFiles()`, `getCandidateProfileSections(slug)`.
 
 ## SVG map
 
@@ -39,9 +39,11 @@ All data comes from `src/lib/data.ts`, which reads `data/profiles/` at build tim
 
 Source CSV: `data-raw/vsichni-platni-kandidati.csv` (semicolon-separated, Czech locale floats with `,`).
 
-Run `node scripts/convert-csv.mjs` to regenerate `data/profiles/{districtId}/{candidateNumber}.md`. The script **always overwrites frontmatter** from CSV data, but **preserves the markdown body** when the file already exists (unless the body is the default placeholder). Profiles are the canonical data store — do not add a separate `data/candidates.json`.
+Run `node scripts/convert-csv.mjs` to regenerate `data/profiles/{slug}.md` (flat directory). The script **always overwrites frontmatter** from CSV data, but **preserves the markdown body** when the file already exists. It also migrates body content from the old `data/profiles/{districtId}/{candidateNumber}.md` layout when no new-path file exists yet. Profiles are the canonical data store — do not add a separate `data/candidates.json`.
 
-Profile format:
+Profile filename format: `{surname-slug}-{firstname-slug}-{districtId}-{candidateNumber}.md`, e.g. `sedlacek-jiri-3-1.md`. The `slug` field on `Candidate` is derived from the filename (strip `.md`).
+
+Profile file format:
 ```
 ---
 districtId: 3
@@ -53,9 +55,13 @@ name: Sedláček Jiří Ing.
 Body text here (campaign info, Q&A with ## headings)
 ```
 
+After migrating, delete the old subdirectory layout: `rm -rf data/profiles/[0-9]*/`
+
 ## Key conventions
 
 **Base URL**: Always use `import.meta.env.BASE_URL` for internal links — the site is deployed under `/project-senat/`, so bare `/` paths will break on production.
+
+**URL pattern**: Both pages use slugs — district: `/obvody/{districtSlug}/` e.g. `/obvody/decin/`; candidate: `/kandidati/{candidateSlug}/` e.g. `/kandidati/sedlacek-jiri-3-1/`. Use `districtSlug(district.name)` and `candidate.slug` to construct links. District numeric IDs are still used for display (badge, `district.id`) but not in URLs.
 
 **Name formatting**: Raw CSV names are `"Surname Firstname Titles"` (e.g. `"Sedláček Jiří Ing."`). Always pass through `formatCzechName()` before display — it reformats to `"[pre-titles] Firstname Surname[, post-titles]"`.
 

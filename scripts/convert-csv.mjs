@@ -17,6 +17,37 @@ const root = path.resolve(fileURLToPath(import.meta.url), "../../");
 const csvPath = path.join(root, "data-raw/vsichni-platni-kandidati.csv");
 const profilesDir = path.join(root, "data/profiles");
 
+function slugify(s) {
+  return s
+    .toLowerCase()
+    .replace(/[áä]/g, "a")
+    .replace(/č/g, "c")
+    .replace(/ď/g, "d")
+    .replace(/[éě]/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ň/g, "n")
+    .replace(/[óö]/g, "o")
+    .replace(/ř/g, "r")
+    .replace(/š/g, "s")
+    .replace(/ť/g, "t")
+    .replace(/[úůü]/g, "u")
+    .replace(/ý/g, "y")
+    .replace(/ž/g, "z")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function candidateSlug(rawName, districtId, candidateNumber) {
+  const tokens = rawName.trim().split(/\s+/).map((t) => t.replace(/,+$/, ""));
+  const nameParts = tokens.filter((t) => !TITLES.has(t));
+  if (nameParts.length < 2) {
+    return `${slugify(rawName)}-${districtId}-${candidateNumber}`;
+  }
+  const surname = nameParts[0];
+  const firstName = nameParts[nameParts.length - 1];
+  return `${slugify(surname)}-${slugify(firstName)}-${districtId}-${candidateNumber}`;
+}
+
 function clean(s) {
   return s.replace(/^﻿/, "").replace(/​/g, "").trim();
 }
@@ -167,15 +198,20 @@ const candidates = lines.slice(1).map((line) => {
 let created = 0;
 let updated = 0;
 for (const c of candidates) {
-  const dir = path.join(profilesDir, String(c.districtId));
-  fs.mkdirSync(dir, { recursive: true });
-  const file = path.join(dir, `${c.candidateNumber}.md`);
+  const slug = candidateSlug(c.name, c.districtId, c.candidateNumber);
+  const file = path.join(profilesDir, `${slug}.md`);
+  const oldFile = path.join(profilesDir, String(c.districtId), `${c.candidateNumber}.md`);
 
   let body;
   if (fs.existsSync(file)) {
     const existing = extractBody(fs.readFileSync(file, "utf-8"));
     body = isPlaceholderBody(existing) ? defaultBody(c.name) : existing;
     updated++;
+  } else if (fs.existsSync(oldFile)) {
+    // Migrate body from old subdirectory layout
+    const existing = extractBody(fs.readFileSync(oldFile, "utf-8"));
+    body = isPlaceholderBody(existing) ? defaultBody(c.name) : existing;
+    created++;
   } else {
     body = defaultBody(c.name);
     created++;
