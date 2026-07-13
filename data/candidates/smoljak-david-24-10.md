@@ -12,7 +12,6 @@ round1Votes: 14893
 round1Percent: 42.87
 round2Votes: 11136
 round2Percent: 54.85
-hlidacStatuOsobaId: david-smoljak
 ---
 
 Pomozte zde:

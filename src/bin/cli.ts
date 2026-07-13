@@ -1,16 +1,19 @@
 import { program } from "commander";
 import dotenv from "dotenv";
-
 import { glob } from "glob";
 import matter from "gray-matter";
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 
 import { getClient, fetchPerson, savePerson } from "../lib/hlidac-statu.ts";
+import { importCsv } from "../lib/statisticky-urad.ts";
 
-dotenv.config({
-  path: [".env.local", ".env"],
-});
+dotenv.config({ path: [".env.local", ".env"] });
+
+program
+  .command("csv:import")
+  .description("Import CSV candidate data into data/candidates/ markdown profiles")
+  .argument("<csv>", "semicolon-separated CSV file to import")
+  .action((csvArg: string) => importCsv(csvArg));
 
 program
   .command("hlidac-statu:osoba")

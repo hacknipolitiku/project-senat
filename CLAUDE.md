@@ -29,7 +29,7 @@ Three pages, all statically generated at build time:
 - `src/pages/obvody/[obvod].astro` — district detail listing candidates (`/obvody/decin/`)
 - `src/pages/kandidati/[kandidat].astro` — candidate detail (`/kandidati/sedlacek-jiri-3-1/`)
 
-All data comes from `src/lib/data.ts`, which reads `data/profiles/` at build time (no JSON file — profiles are the source of truth). Key exports: `getCandidates()`, `getDistricts()`, `getDistrict(id)`, `getCandidate(districtId, candidateNumber)`, `districtSlug(name)`, `candidateFileSlug(rawName, districtId, candidateNumber)`, `formatCzechName()`, `getPartyLogoFiles()`, `getCandidateProfileSections(slug)`.
+Data is served via **Astro Content Collections** (`src/content.config.ts`): `candidates` (`data/candidates/*.md`), `districts` (`data/districts.json`), `hlidac-statu` (`data/hlidac-statu/*.json`). Pages call `getCollection()` / `getEntry()` / `render()` from `astro:content`. `src/lib/data.ts` now only exports pure utilities: `districtSlug()`, `candidateFileSlug()`, `formatCzechName()`, `getPartyLogoFiles()`.
 
 ## SVG map
 
@@ -39,9 +39,9 @@ All data comes from `src/lib/data.ts`, which reads `data/profiles/` at build tim
 
 Source CSV: `data-raw/vsichni-platni-kandidati.csv` (semicolon-separated, Czech locale floats with `,`).
 
-Run `node scripts/convert-csv.mjs` to regenerate `data/profiles/{slug}.md` (flat directory). The script **always overwrites frontmatter** from CSV data, but **preserves the markdown body** when the file already exists. It also migrates body content from the old `data/profiles/{districtId}/{candidateNumber}.md` layout when no new-path file exists yet. Profiles are the canonical data store — do not add a separate `data/candidates.json`.
+Run `pnpm cli csv:import <path-to-csv>` to regenerate `data/candidates/{slug}.md`. Frontmatter is always overwritten from CSV; the markdown body is preserved when the file already exists. Profiles are the canonical data store.
 
-Profile filename format: `{surname-slug}-{firstname-slug}-{districtId}-{candidateNumber}.md`, e.g. `sedlacek-jiri-3-1.md`. The `slug` field on `Candidate` is derived from the filename (strip `.md`).
+Profile filename format: `{surname-slug}-{firstname-slug}-{districtId}-{candidateNumber}.md`, e.g. `sedlacek-jiri-3-1.md`. The entry `id` in the collection equals this slug (filename without `.md`).
 
 Profile file format:
 ```
@@ -49,13 +49,16 @@ Profile file format:
 districtId: 3
 candidateNumber: 1
 name: Sedláček Jiří Ing.
-... (other CSV fields)
+... (other CSV fields, votes/percent optional)
 ---
 
 Body text here (campaign info, Q&A with ## headings)
 ```
 
-After migrating, delete the old subdirectory layout: `rm -rf data/profiles/[0-9]*/`
+CLI commands (`pnpm cli <command>`):
+- `csv:import <csv>` — import/update candidate profiles from a CSV file
+- `hlidac-statu:osoba <osoba-id> [-s]` — fetch a single person from Hlídač státu (requires `HLIDAC_STATU_TOKEN`)
+- `hlidac-statu:refetch` — re-fetch all persons whose profile has `hlidacStatuOsobaId` set
 
 ## Key conventions
 
