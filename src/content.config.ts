@@ -31,4 +31,31 @@ const districts = defineCollection({
   }),
 });
 
-export const collections = { candidates, districts };
+const hlidacStatu = defineCollection({
+  loader: glob({ pattern: "*.json", base: "./data/hlidac-statu" }),
+  schema: z.object({
+    sponzoring: z
+      .array(
+        z.object({
+          typ: z.string(),
+          organizace: z.string(),
+          castka: z.number(),
+          datumOd: z.coerce.date(),
+        }),
+      )
+      .default([]),
+    udalosti: z
+      .array(
+        z.object({
+          typ: z.string(),
+          organizace: z.string(),
+          role: z.string(),
+          datumOd: z.coerce.date().nullish(),
+          datumDo: z.coerce.date().nullish(),
+        }),
+      )
+      .default([]),
+  }),
+});
+
+export const collections = { candidates, districts, "hlidac-statu": hlidacStatu };

@@ -5,10 +5,12 @@ import { formatCzechName, getPartyLogoFiles } from "../../lib/data";
 import { getDistrictUrl, getPartyLogoUrl } from "../../lib/links";
 
 export async function getStaticPaths() {
-  const [candidateEntries, districtEntries] = await Promise.all([
-    getCollection("candidates"),
-    getCollection("districts"),
-  ]);
+  const [candidateEntries, districtEntries, hlidacStatuEntries] =
+    await Promise.all([
+      getCollection("candidates"),
+      getCollection("districts"),
+      getCollection("hlidac-statu"),
+    ]);
   return candidateEntries.map((entry) => {
     const districtCandidates = candidateEntries.filter(
       (e) => e.data.districtId === entry.data.districtId,
@@ -16,36 +18,52 @@ export async function getStaticPaths() {
     const district = districtEntries.find(
       (d) => d.data.id === entry.data.districtId,
     );
+    const hlidacStatu = entry.data.hlidacStatuOsobaId
+      ? (hlidacStatuEntries.find(
+          (h) => h.id === entry.data.hlidacStatuOsobaId,
+        ) ?? null)
+      : null;
     return {
       params: { kandidat: entry.id },
-      props: { entry, districtCandidates, district },
+      props: { entry, districtCandidates, district, hlidacStatu },
     };
   });
 }
 
-const { entry, districtCandidates, district } = Astro.props;
+const { entry, district, hlidacStatu } = Astro.props;
 const { Content } = await render(entry);
 
 const districtId = entry.data.districtId;
 const districtName = district?.data.name ?? "";
 
-const round2Candidates = districtCandidates.filter((c) => c.data.round2Votes > 0);
-const winner =
-  round2Candidates.length > 0
-    ? round2Candidates.sort((a, b) => b.data.round2Votes - a.data.round2Votes)[0]
-    : null;
-const isWinner = winner?.data.candidateNumber === entry.data.candidateNumber;
-const hasResults = districtCandidates.some((c) => c.data.round1Votes > 0);
 const displayName = formatCzechName(entry.data.name);
 const birthYear = 2026 - entry.data.age;
 const partyLogos = getPartyLogoFiles(entry.data.electoralParty);
+
+const osobaId = entry.data.hlidacStatuOsobaId;
+const hlidacStatuProfileUrl = osobaId
+  ? `https://www.hlidacstatu.cz/osoba/${osobaId}`
+  : null;
+
+function formatCzk(amount: number): string {
+  return amount.toLocaleString("cs-CZ") + " Kč";
+}
+
+function formatDateRange(item: {
+  datumOd?: Date | null;
+  datumDo?: Date | null;
+}): string {
+  if (item.datumOd)
+    return `${item.datumOd.getFullYear()} - ${item.datumDo ? item.datumDo.getFullYear() : "dosud"}`;
+  if (item.datumDo) return `do ${item.datumDo.getFullYear()}`;
+  return "";
+}
 ---
 
 <Layout
   title={displayName}
   description={`${displayName} – kandidát v obvodu ${districtId} ${districtName}`}
 >
-  <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6">
     <a
       href={getDistrictUrl(districtName)}
@@ -124,25 +142,6 @@ const partyLogos = getPartyLogoFiles(entry.data.electoralParty);
             {entry.data.residence}
           </dd>
         </div>
-
-        <div class="flex justify-between gap-4">
-          <dt class="text-sm text-gray-500">Hlídač státu</dt>
-          <dd class="text-sm font-medium text-gray-900 text-right">
-            {
-              entry.data.hlidacStatuUrl ? (
-                <a
-                  href={entry.data.hlidacStatuUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {entry.data.hlidacStatuUrl}
-                </a>
-              ) : (
-                "N/A"
-              )
-            }
-          </dd>
-        </div>
       </dl>
     </section>
 
@@ -161,6 +160,132 @@ const partyLogos = getPartyLogoFiles(entry.data.electoralParty);
       </div>
     </section>
   </div>
+
+  {
+    hlidacStatu && (
+      <section class="rounded-lg p-5 mb-8" style="border: 1px solid #2a2b6630;">
+        <div class="flex items-center justify-between mb-6">
+          <h2
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: #2a2b66;"
+          >
+            Hlídač státu
+          </h2>
+          {hlidacStatuProfileUrl && (
+            <a
+              href={hlidacStatuProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-xs transition-opacity hover:opacity-70"
+              style="color: #2a2b66;"
+            >
+              Profil na Hlídači státu ↗
+            </a>
+          )}
+        </div>
+
+        {hlidacStatu.data.udalosti.length > 0 &&
+          (() => {
+            const byDate = (
+              a: { datumOd?: Date | null },
+              b: { datumOd?: Date | null },
+            ) => (b.datumOd?.getTime() ?? 0) - (a.datumOd?.getTime() ?? 0);
+            const active = hlidacStatu.data.udalosti
+              .filter((u) => !u.datumDo)
+              .sort(byDate);
+            const past = hlidacStatu.data.udalosti
+              .filter((u) => u.datumDo)
+              .sort(byDate);
+
+            const renderList = (items: typeof active) => (
+              <ul class="space-y-3">
+                {items.map((u) => (
+                  <li class="border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                    <div class="flex items-center gap-3">
+                      <div class="text-sm text-gray-400 shrink-0 pt-2 min-w-25">
+                        {formatDateRange(u)}
+                      </div>
+                      <div>
+                        <span class="text-xs font-medium text-gray-500 m-1">
+                          {u.typ}
+                        </span>
+                        <span class="text-sm text-gray-900 m-1">
+                          {u.organizace}
+                        </span>
+                        <span class="text-xs text-gray-500 m-1">{u.role}</span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            );
+
+            return (
+              <>
+                {active.length > 0 && (
+                  <div class="mb-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                      Funkce
+                    </h3>
+                    {renderList(active)}
+                  </div>
+                )}
+                {past.length > 0 && (
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">
+                      Minulé funkce
+                    </h3>
+                    {renderList(past)}
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
+        {hlidacStatu.data.sponzoring.length > 0 && (
+          <div class="mt-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Sponzoring</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-200">
+                    <th class="text-left py-2 pr-4 text-gray-500 font-medium">
+                      Datum
+                    </th>
+                    <th class="text-left py-2 pr-4 text-gray-500 font-medium">
+                      Organizace
+                    </th>
+                    <th class="text-right py-2 pr-4 text-gray-500 font-medium">
+                      Částka
+                    </th>
+                    <th class="text-left py-2 text-gray-500 font-medium">
+                      Typ
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...hlidacStatu.data.sponzoring]
+                    .sort((a, b) => a.datumOd.getTime() - b.datumOd.getTime())
+                    .map((s) => (
+                      <tr class="border-b border-gray-100">
+                        <td class="py-2 pr-4 text-gray-400 font-mono text-xs">
+                          {s.datumOd.getFullYear()}
+                        </td>
+                        <td class="py-2 pr-4 text-gray-900">{s.organizace}</td>
+                        <td class="py-2 pr-4 text-gray-900 text-right font-mono">
+                          {formatCzk(s.castka)}
+                        </td>
+                        <td class="py-2 text-gray-600">{s.typ}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </section>
+    )
+  }
 
   <!-- The back button on bottom is only visible on mobile -->
   <nav class="text-sm mb-6 mt-12 sm:hidden">

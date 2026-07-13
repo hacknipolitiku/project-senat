@@ -1,0 +1,341 @@
+{
+  "meta": {
+    "fetchedAt": "2026-07-13T10:43:07.692Z"
+  },
+  "titulPred": "",
+  "jmeno": "Milan",
+  "prijmeni": "Štěch",
+  "titulPo": "",
+  "narozeni": "1953-11-13T00:00:00",
+  "nameId": "milan-stech",
+  "profile": "/osoba/milan-stech",
+  "politickaStrana": "SOCDEM",
+  "sponzoring": [
+    {
+      "typ": "sponzor",
+      "organizace": "SOCDEM",
+      "role": null,
+      "castka": 50000,
+      "datumOd": "2016-01-01T00:00:00",
+      "datumDo": "2016-01-01T00:00:00"
+    },
+    {
+      "typ": "sponzor",
+      "organizace": "SOCDEM",
+      "role": null,
+      "castka": 100000,
+      "datumOd": "2020-06-05T00:00:00",
+      "datumDo": "2020-06-05T00:00:00"
+    }
+  ],
+  "udalosti": [
+    {
+      "typ": "Politická exekutivní",
+      "organizace": "Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2008-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Předsednictvo ČSSD",
+      "role": "člen",
+      "castka": null,
+      "datumOd": null,
+      "datumDo": null
+    },
+    {
+      "typ": "Politická strana",
+      "organizace": "KSČ",
+      "role": "člen strany",
+      "castka": null,
+      "datumOd": "1978-01-01T00:00:00",
+      "datumDo": "1989-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Organizační výbor - Senát PČR",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2008-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická strana",
+      "organizace": "ČSSD",
+      "role": "člen strany",
+      "castka": null,
+      "datumOd": "1997-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Politická strana",
+      "organizace": "Občanské fórum",
+      "role": "člen strany",
+      "castka": null,
+      "datumOd": "1989-01-01T00:00:00",
+      "datumDo": "1991-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Ústřední výkonný výbor ČSSD",
+      "role": "člen",
+      "castka": null,
+      "datumOd": null,
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Organizační výbor - Senát PČR",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "2010-01-01T00:00:00",
+      "datumDo": "2017-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Politické grémium ČSSD",
+      "role": "člen",
+      "castka": null,
+      "datumOd": null,
+      "datumDo": null
+    },
+    {
+      "typ": "Volená funkce",
+      "organizace": "Senát PČR",
+      "role": "senátor",
+      "castka": null,
+      "datumOd": "1996-11-23T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Senátu Parlamentu ČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2008-01-01T00:00:00",
+      "datumDo": "2008-12-31T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Škoda a.s. České Budějovice",
+      "role": "zaměstnanec",
+      "castka": null,
+      "datumOd": null,
+      "datumDo": "1990-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Závodní výbor ROH",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "1979-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro podporu demokracie ve světě",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2008-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro práci Kanceláře Senátu",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2008-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Senátorský klub České strany sociálně demokratické",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "1996-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Odborový svaz KOVO",
+      "role": "člen předsednictva",
+      "castka": null,
+      "datumOd": "1990-01-01T00:00:00",
+      "datumDo": "1994-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Českomoravská konfederace odborových svazů",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "1994-01-01T00:00:00",
+      "datumDo": "2002-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Českomoravská konfederace odborových svazů",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "1994-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Českomoravská konfederace odborových svazů",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "2002-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Senátu Parlamentu ČR",
+      "role": "nezávislý kandidát",
+      "castka": null,
+      "datumOd": "1996-01-01T00:00:00",
+      "datumDo": "1996-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Senátu Parlamentu ČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2002-01-01T00:00:00",
+      "datumDo": "2002-12-31T00:00:00"
+    },
+    {
+      "typ": "Soukromá pracovní",
+      "organizace": "Vysoká škola polytechnická Jihlava (VŠPJ)",
+      "role": "člen správní rady",
+      "castka": null,
+      "datumOd": "2011-01-01T00:00:00",
+      "datumDo": null
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Podvýbor Organizačního výboru pro státní vyznamenání  - Senát PČR",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2010-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Výbor pro zdravotnictví a sociální politiku  - Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "1997-01-01T00:00:00",
+      "datumDo": "2008-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Dočasná komise Senátu pro zjištění osob z polit. dův. zadrž., vězněn. a jinak perzek. bělor. režimem",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2006-01-01T00:00:00",
+      "datumDo": "2008-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Podvýbor Výboru pro zdravotnictví a sociální politiku pro důchodovou reformu - Senát PČR",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "1999-01-01T00:00:00",
+      "datumDo": "2002-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Výbor pro zdravotnictví a sociální politiku  - Senát PČR",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "1996-01-01T00:00:00",
+      "datumDo": "2008-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Rada hospodářské a sociální dohody České republiky",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "1994-01-01T00:00:00",
+      "datumDo": "2010-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Senátu Parlamentu ČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2014-01-01T00:00:00",
+      "datumDo": "2014-12-31T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro Ústavu České republiky a parlamentní procedury",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2014-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Senát PČR",
+      "role": "předseda",
+      "castka": null,
+      "datumOd": "2010-01-01T00:00:00",
+      "datumDo": "2018-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2018-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Stálá komise Senátu pro krajany žijící v zahraničí",
+      "role": "člen",
+      "castka": null,
+      "datumOd": "2018-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Veřejná správa jiné",
+      "organizace": "Organizační výbor - Senát PČR",
+      "role": "místopředseda",
+      "castka": null,
+      "datumOd": "2017-01-01T00:00:00",
+      "datumDo": "2020-01-01T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Senátu PČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2020-01-01T00:00:00",
+      "datumDo": "2020-12-31T00:00:00"
+    },
+    {
+      "typ": "Politická",
+      "organizace": "kandidát ČSSD ve volbách do Poslanecké sněmovny PČR",
+      "role": "kandidát",
+      "castka": null,
+      "datumOd": "2021-01-01T00:00:00",
+      "datumDo": "2021-01-01T00:00:00"
+    }
+  ],
+  "socialniSite": [
+    {
+      "type": "Facebook_page",
+      "id": "stechmilan",
+      "url": "https://www.facebook.com/stechmilan"
+    },
+    {
+      "type": "WWW",
+      "id": "https://www.milan-stech.cz/",
+      "url": "https://www.milan-stech.cz/"
+    }
+  ]
+}
