@@ -21,12 +21,21 @@ jobs:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
         with:
-          version: '11.0.8'
+          version: "11.0.8"
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Prepare data
+        env:
+          CANDIDATES_CSV_URL: ${{ vars.CANDIDATES_CSV_URL }}
+        run: |
+          if [ -n "$CANDIDATES_CSV_URL" ]; then
+            pnpm run data:prepare
+          else
+            echo "CANDIDATES_CSV_URL not set — building from committed data/candidates.json"
+          fi
       - run: pnpm run build
       - uses: actions/upload-pages-artifact@v3
         with:

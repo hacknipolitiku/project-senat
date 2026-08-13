@@ -12,10 +12,6 @@ export function getDistrictUrl(slug: string): string {
   return `${base}obvody/${slug}/`;
 }
 
-export function getCandidateUrl(candidateSlug: string): string {
-  return `${base}kandidati/${candidateSlug}/`;
-}
-
 export function getPartyLogoUrl(logoFile: string): string {
   return `${base}logos/${logoFile}`;
 }

@@ -1,9 +1,9 @@
 import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
-import { glob, file } from "astro/loaders";
+import { file } from "astro/loaders";
 
 const candidates = defineCollection({
-  loader: glob({ pattern: "*.md", base: "./data/candidates" }),
+  loader: file("./data/candidates.json"),
   schema: z.object({
     districtId: z.number(),
     candidateNumber: z.number(),
@@ -18,7 +18,6 @@ const candidates = defineCollection({
     round1Percent: z.number().optional(),
     round2Votes: z.number().optional(),
     round2Percent: z.number().optional(),
-    hlidacStatuOsobaId: z.string().optional(),
   }),
 });
 
@@ -31,31 +30,4 @@ const districts = defineCollection({
   }),
 });
 
-const hlidacStatu = defineCollection({
-  loader: glob({ pattern: "*.json", base: "./data/hlidac-statu" }),
-  schema: z.object({
-    sponzoring: z
-      .array(
-        z.object({
-          typ: z.string(),
-          organizace: z.string(),
-          castka: z.number(),
-          datumOd: z.coerce.date(),
-        }),
-      )
-      .default([]),
-    udalosti: z
-      .array(
-        z.object({
-          typ: z.string(),
-          organizace: z.string(),
-          role: z.string(),
-          datumOd: z.coerce.date().nullish(),
-          datumDo: z.coerce.date().nullish(),
-        }),
-      )
-      .default([]),
-  }),
-});
-
-export const collections = { candidates, districts, "hlidac-statu": hlidacStatu };
+export const collections = { candidates, districts };

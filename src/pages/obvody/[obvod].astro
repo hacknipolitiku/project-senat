@@ -1,8 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
-import { districtSlug, formatCzechName, getPartyLogoFiles } from "../../lib/data";
-import { getCandidateUrl, getHomepageUrl, getPartyLogoUrl } from "../../lib/links";
+import { formatCzechName, getPartyLogoFiles } from "../../lib/data";
+import { getHomepageUrl, getPartyLogoUrl } from "../../lib/links";
 
 export async function getStaticPaths() {
   const [districtEntries, candidateEntries] = await Promise.all([
@@ -56,18 +56,8 @@ const { district } = Astro.props;
   <div class="grid gap-3">
     {
       district.candidates.map((c) => {
-        const winner =
-          district.candidates.filter((x) => x.data.round2Votes > 0).length > 0
-            ? district.candidates
-                .filter((x) => x.data.round2Votes > 0)
-                .sort((a, b) => b.data.round2Votes - a.data.round2Votes)[0]
-                ?.data.candidateNumber === c.data.candidateNumber
-            : false;
         return (
-          <a
-            href={getCandidateUrl(c.id)}
-            class="block rounded-lg px-4 py-3 transition-colors hover:bg-blue-50 border-1 border-blue-900"
-          >
+          <div class="block rounded-lg px-4 py-3 border-1 border-blue-900">
             <div class="flex items-start gap-4">
               <div class="w-6 text-center">
                 <span class="text-xs text-gray-400 font-mono">
@@ -97,10 +87,8 @@ const { district } = Astro.props;
                   <span>{c.data.residence}</span>
                 </div>
               </div>
-
-              <div class="ml-auto w-2 h-2 border-t-1 border-l-1 transform rotate-135 border-gray-800 self-center" />
             </div>
-          </a>
+          </div>
         );
       })
     }

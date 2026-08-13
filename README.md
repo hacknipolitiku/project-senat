@@ -6,31 +6,57 @@ Webová stránka přibližující kandidáty do senátních voleb v České repu
 
 ## Stránky
 
-| Stránka            | URL                            |
-| ------------------ | ------------------------------ |
-| Úvodní mapa obvodů | `/`                            |
-| Detail obvodu      | `/obvody/[slug]/`              |
-| Detail kandidáta   | `/kandidati/[slug]/`           |
+| Stránka            | URL               |
+| ------------------ | ----------------- |
+| Úvodní mapa obvodů | `/`               |
+| Detail obvodu      | `/obvody/[slug]/` |
+
+Detail obvodu vypisuje kandidáty daného obvodu. Samostatná stránka kandidáta neexistuje.
 
 ## Technologie
 
 - [Astro](https://astro.build/) 6 – statický web, Content Collections
 - TypeScript, Tailwind CSS 4
-- Playwright (e2e testy)
+- Playwright (e2e testy), `node --test` (unit testy)
 
 ## Instalace
 
-Vyžaduje Node 22+ a pnpm.
+Vyžaduje Node 24 (viz `.nvmrc`) a pnpm.
 
 ```bash
 pnpm install
 ```
 
-Pro Hlídač státu je potřeba API token:
+## Build pipeline
+
+Veškerá data pocházejí z jednoho CSV souboru. Build má dva kroky:
 
 ```bash
-cp .env.example .env.local   # nebo vytvořit ručně
-# Nastavit HLIDAC_STATU_TOKEN
+pnpm run data:prepare       # 1. stáhne CSV a zpracuje ho → data/candidates.json
+pnpm run build              # 2. sestaví Astro web → dist/
+
+pnpm run build:all          # oba kroky za sebou
+```
+
+`data/candidates.json` (výstup kroku 1) je commitnutý v repozitáři, takže `pnpm run build`
+funguje i bez stažení dat.
+
+### 1. Prepare (download + preprocess)
+
+```bash
+pnpm run data:prepare <url>                       # explicitní URL
+CANDIDATES_CSV_URL=<url> pnpm run data:prepare     # nebo z env proměnné
+```
+
+Stáhne zdrojové CSV do `data-raw/vsichni-platni-kandidati.csv` (build artefakt, v `.gitignore`)
+a rovnou ho zpracuje. URL se nikdy nezadává natvrdo. CSV je oddělené středníky, s českými
+desetinnými čárkami; výstupem je pole kandidátů v `data/candidates.json`, které načítá Astro
+Content Collection (`src/content.config.ts`).
+
+Přegenerování `data/candidates.json` z lokálního CSV bez stahování (např. z přiloženého vzorku):
+
+```bash
+pnpm cli data:preprocess [csv]      # výchozí vstup: data-raw/vsichni-platni-kandidati.csv
 ```
 
 ## Vývoj
@@ -42,15 +68,19 @@ pnpm preview    # náhled produkčního buildu na http://localhost:4322
 pnpm fmt        # formátování (oxfmt)
 ```
 
-### Testy
+## Testy
 
-Testy běží proti produkčnímu buildu (port 4322), ne dev serveru.
+Každý build krok se testuje samostatně:
 
 ```bash
-npx playwright install --with-deps   # jednorázové nastavení
-npx playwright test                  # všechny testy
-npx playwright test tests/home.spec.ts        # jeden soubor
-npx playwright test --grep "district"         # filtr podle názvu
+pnpm run test:unit    # node --test – download a preprocess (bez závislostí, bez sítě)
+pnpm run test:e2e     # playwright – sestavený web (port 4322)
+pnpm test             # unit + e2e
+
+# Jednorázové nastavení Playwrightu:
+npx playwright install --with-deps
+npx playwright test tests/home.spec.ts     # jeden soubor
+npx playwright test --grep "district"      # filtr podle názvu
 ```
 
 ## CLI
@@ -59,37 +89,32 @@ npx playwright test --grep "district"         # filtr podle názvu
 pnpm cli <příkaz>
 ```
 
-| Příkaz | Popis |
-| --- | --- |
-| `map:process` | Zpracuje `data-raw/senate-map-wikipedia.svg` → `public/senate-map.svg`. Spustit jednorázově po změně zdrojového SVG. |
-| `csv:import <soubor>` | Importuje kandidáty ze CSV (středníky, české desetinné čárky) do `data/candidates/`. Frontmatter se přepíše, tělo profilu a `hlidacStatuOsobaId` se zachovají. |
-| `hlidac-statu:osoba <id> [-s]` | Stáhne data osoby z Hlídače státu. S `-s` uloží do `data/hlidac-statu/`. Vyžaduje `HLIDAC_STATU_TOKEN`. |
-| `hlidac-statu:import` | Přestáhne data pro všechny kandidáty, kteří mají vyplněné `hlidacStatuOsobaId`. |
+| Příkaz                  | Popis                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `data:prepare [url]`    | Stáhne zdrojové CSV a zpracuje ho do `data/candidates.json`. URL z argumentu nebo `$CANDIDATES_CSV_URL`. |
+| `data:preprocess [csv]` | Zpracuje lokální CSV do `data/candidates.json` (bez stahování).                                          |
+| `map:process`           | Zpracuje `data-raw/senate-map-wikipedia.svg` → `public/senate-map.svg`. Jednorázově po změně SVG.        |
 
 ## Data
 
 ### Kandidáti
 
-Zdrojové CSV: `data-raw/vsichni-platni-kandidati.csv`.
-
-```bash
-pnpm cli csv:import data-raw/vsichni-platni-kandidati.csv
-```
-
-Profily se ukládají do `data/candidates/{příjmení}-{jméno}-{obvod}-{číslo}.md`. Každý profil má YAML frontmatter (z CSV) a markdown tělo (kampaňové informace, Q&A – vyplňuje se ručně).
+Zdroj: jeden CSV soubor (Český statistický úřad). Krok `data:prepare` z něj vygeneruje
+`data/candidates.json` – kanonický datový soubor, který web čte. Pole odpovídají sloupcům CSV:
+obvod, číslo, jméno, věk, volební/navrhující strana, politická příslušnost, povolání, bydliště
+a (volitelně) výsledky 1. a 2. kola.
 
 ### SVG mapa
 
-Zdrojový soubor `data-raw/senate-map-wikipedia.svg` se nikdy nemění. Zpracovaná verze `public/senate-map.svg` je vygenerovaná jednou a commitnutá do repozitáře:
+Zdrojový soubor `data-raw/senate-map-wikipedia.svg` se nikdy nemění. Zpracovaná verze
+`public/senate-map.svg` je vygenerovaná jednou a commitnutá do repozitáře:
 
 ```bash
 pnpm cli map:process
 ```
 
-### Hlídač státu
-
-Data se stahují do `data/hlidac-statu/{osobaId}.json`. ID osoby se nastaví ručně v profilu kandidáta (`hlidacStatuOsobaId`).
-
 ## Nasazení
 
 GitHub Pages, branch `main`. Základní URL je `/project-senat/` – konfigurováno v `astro.config.mjs`.
+Workflow spustí `data:prepare` → `build`. Pokud repozitářová proměnná `CANDIDATES_CSV_URL`
+není nastavená, build použije commitnutý `data/candidates.json`.

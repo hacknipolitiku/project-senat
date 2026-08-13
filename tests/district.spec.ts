@@ -8,12 +8,11 @@ test.describe("District page", () => {
     await expect(page.getByText(/kandidátů/)).toBeVisible();
   });
 
-  test("candidate link navigates to candidate page", async ({ page }) => {
+  test("lists candidates with name, occupation and residence", async ({ page }) => {
     await page.goto("obvody/cheb/");
-    // Click first candidate
-    const firstCandidate = page.getByRole("link").filter({ hasText: /#1/ }).first();
-    await firstCandidate.click();
-    await expect(page).toHaveURL(/\/kandidati\/sedlacek-jiri-3-1\//);
+    // Candidate 1 in Cheb is Jiří Sedláček (see data/candidates.json)
+    await expect(page.getByText(/Sedláček/).first()).toBeVisible();
+    await expect(page.getByText(/#1/).first()).toBeVisible();
   });
 
   test("back navigation link returns to home", async ({ page }) => {
