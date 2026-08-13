@@ -1,8 +1,14 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
-import { districtSlug, formatCzechName, getPartyLogoFiles } from "../../lib/data";
-import { getCandidateUrl, getHomepageUrl, getPartyLogoUrl } from "../../lib/links";
+import { formatCzechName, getPartyLogoFiles } from "../../lib/data";
+import {
+  getCandidateFormUrl,
+  getHomepageUrl,
+  getHostLabel,
+  getInstagramUrl,
+  getPartyLogoUrl,
+} from "../../lib/links";
 
 export async function getStaticPaths() {
   const [districtEntries, candidateEntries] = await Promise.all([
@@ -17,7 +23,7 @@ export async function getStaticPaths() {
         name: district.data.name,
         candidates: candidateEntries
           .filter((e) => e.data.districtId === district.data.id)
-          .sort((a, b) => a.data.candidateNumber - b.data.candidateNumber),
+          .sort((a, b) => a.data.name.localeCompare(b.data.name, "cs")),
       },
     },
   }));
@@ -56,31 +62,25 @@ const { district } = Astro.props;
   <div class="grid gap-3">
     {
       district.candidates.map((c) => {
-        const winner =
-          district.candidates.filter((x) => x.data.round2Votes > 0).length > 0
-            ? district.candidates
-                .filter((x) => x.data.round2Votes > 0)
-                .sort((a, b) => b.data.round2Votes - a.data.round2Votes)[0]
-                ?.data.candidateNumber === c.data.candidateNumber
-            : false;
+        const declarationLabel =
+          c.data.gender === "f" ? "Podepsala deklaraci" : "Podepsal deklaraci";
+        const partyLogos = getPartyLogoFiles(c.data.electoralParty);
+        const hasLinks =
+          c.data.facebook ||
+          c.data.instagram ||
+          c.data.hlidacStatuUrl ||
+          c.data.web ||
+          c.data.signedDeclaration;
         return (
-          <a
-            href={getCandidateUrl(c.id)}
-            class="block rounded-lg px-4 py-3 transition-colors hover:bg-blue-50 border-1 border-blue-900"
-          >
+          <div class="block rounded-lg px-4 py-3 border-1 border-blue-900">
             <div class="flex items-start gap-4">
-              <div class="w-6 text-center">
-                <span class="text-xs text-gray-400 font-mono">
-                  #{c.data.candidateNumber}
-                </span>
-              </div>
-              <div>
+              <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-semibold text-gray-900">
                     {formatCzechName(c.data.name)}
                   </span>
-                  {getPartyLogoFiles(c.data.electoralParty).length > 0 ? (
-                    getPartyLogoFiles(c.data.electoralParty).map((logo) => (
+                  {partyLogos.length > 0 ? (
+                    partyLogos.map((logo) => (
                       <img
                         src={getPartyLogoUrl(logo)}
                         alt={logo.replace(".svg", "")}
@@ -88,19 +88,111 @@ const { district } = Astro.props;
                       />
                     ))
                   ) : (
-                    <span>{c.data.electoralParty}</span>
+                    <span class="text-sm text-gray-500">{c.data.electoralParty}</span>
                   )}
                 </div>
-                <div class="mt-1 text-sm text-gray-500 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                  <span>{c.data.occupation}</span>
-                  <span>·</span>
-                  <span>{c.data.residence}</span>
-                </div>
+                {c.data.occupation && (
+                  <div class="mt-1 text-sm text-gray-500">{c.data.occupation}</div>
+                )}
+                {hasLinks && (
+                  <div class="mt-2 flex items-center gap-x-4 gap-y-1 flex-wrap text-sm">
+                    {c.data.facebook && (
+                      <a
+                        href={c.data.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Facebook"
+                        aria-label="Facebook"
+                        class="text-gray-500 transition-colors hover:text-gray-900"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          class="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                      </a>
+                    )}
+                    {c.data.instagram && (
+                      <a
+                        href={getInstagramUrl(c.data.instagram)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Instagram @${c.data.instagram}`}
+                        aria-label="Instagram"
+                        class="text-gray-500 transition-colors hover:text-gray-900"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          class="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                        </svg>
+                      </a>
+                    )}
+                    {c.data.hlidacStatuUrl && (
+                      <a
+                        href={c.data.hlidacStatuUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="transition-opacity hover:opacity-70 hover:underline"
+                        style="color: #2a2b66;"
+                      >
+                        {getHostLabel(c.data.hlidacStatuUrl)}
+                      </a>
+                    )}
+                    {c.data.web && (
+                      <a
+                        href={c.data.web}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="transition-opacity hover:opacity-70 hover:underline"
+                        style="color: #2a2b66;"
+                      >
+                        {getHostLabel(c.data.web)}
+                      </a>
+                    )}
+                    {c.data.signedDeclaration && (
+                      <span
+                        title={declarationLabel}
+                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                        style="background-color: #2a2b6614; color: #2a2b66;"
+                      >
+                        <svg
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          class="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3.5-3.5a1 1 0 011.42-1.42l2.79 2.79 6.79-6.79a1 1 0 011.42 0z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                        {declarationLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-
-              <div class="ml-auto w-2 h-2 border-t-1 border-l-1 transform rotate-135 border-gray-800 self-center" />
+              {c.data.supported && (
+                <a
+                  href={getCandidateFormUrl(formatCzechName(c.data.name))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="ml-auto self-center shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                  style="background-color: #fa1a5b;"
+                >
+                  Zapojit se do kampaně
+                </a>
+              )}
             </div>
-          </a>
+          </div>
         );
       })
     }
