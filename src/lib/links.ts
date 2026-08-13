@@ -16,17 +16,17 @@ export function getPartyLogoUrl(logoFile: string): string {
   return `${base}logos/${logoFile}`;
 }
 
-/** URL of a static asset under `public/` (e.g. "logos/hlidac-statu.png"). */
-export function getAssetUrl(path: string): string {
-  return `${base}${path.replace(/^\//, "")}`;
-}
-
-export function getTwitterUrl(handle: string): string {
-  return `https://x.com/${handle.replace(/^@/, "")}`;
-}
-
 export function getInstagramUrl(handle: string): string {
   return `https://instagram.com/${handle.replace(/^@/, "")}`;
+}
+
+/** Short display label for a link — its hostname without "www." (e.g. "plevny.cz"). */
+export function getHostLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
 
 // --- Candidate sign-up Google Form -----------------------------------------

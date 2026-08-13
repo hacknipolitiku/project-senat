@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-/** Where the download step leaves the CSV, and the preprocess step reads it. */
-export const DEFAULT_CSV_SRC = "data-raw/vsichni-platni-kandidati.csv";
+/** Committed source CSV, used when no download URL is provided. */
+export const DEFAULT_CSV_SRC = "data-raw/tabulka-novy-format.csv";
 /** The single data file the Astro build consumes. */
 export const DEFAULT_JSON_DEST = "data/candidates.json";
 
@@ -10,90 +10,91 @@ export interface Candidate {
   /** Collection entry id: `${districtId}-${candidateNumber}`. */
   id: string;
   districtId: number;
+  /** Per-district running index in CSV order — NOT an official ballot number. */
   candidateNumber: number;
+  /** "Surname Firstname Titles" — always pass through formatCzechName() to display. */
   name: string;
-  age: number;
+  /** Nominating party ("Nominace") — drives the party logo. */
   electoralParty: string;
-  nominatingParty: string;
-  politicalAffiliation: string;
   occupation: string;
-  residence: string;
   /** Guessed from the name: "m" male, "f" female (drives Czech word endings). */
   gender: "m" | "f";
-  round1Votes?: number;
-  round1Percent?: number;
-  round2Votes?: number;
-  round2Percent?: number;
+  /** "Podporujeme?" = Ano — whether the initiative backs this candidate. */
+  supported: boolean;
+  birthYear?: number;
+  /** Supporting parties / coalition ("Podpora"). */
+  coalition?: string;
   signedDeclaration?: boolean;
   hlidacStatuUrl?: string;
-  twitter?: string;
+  facebook?: string;
   instagram?: string;
-  showForm?: boolean;
+  web?: string;
 }
 
-/**
- * Maps each Candidate field to the CSV column header it is read from.
- *
- * Columns are matched by header name (case-insensitive, whitespace-collapsed),
- * NOT by position — so reordered columns still import correctly. When the real
- * CSV uses different header text, update the strings here and nothing else.
- * A field whose header is not found is simply left empty/omitted; the new
- * declaration/social/form columns below use best-guess headers — adjust them
- * once the real export is available.
- */
-const COLUMNS = {
-  districtId: "Volební obvod",
-  candidateNumber: "Kandidát.číslo",
-  name: "Kandidát.příjmení, jméno, tituly",
-  age: "Kandidát.věk",
-  electoralParty: "Volební strana",
-  nominatingParty: "Navrhující strana",
-  politicalAffiliation: "Politická příslušnost",
-  occupation: "Povolání",
-  residence: "Bydliště",
-  round1Votes: "1. kolo.počet hlasů",
-  round1Percent: "1. kolo.%",
-  round2Votes: "2. kolo.počet hlasů",
-  round2Percent: "2. kolo.%",
-  signedDeclaration: "Podepsal deklaraci",
-  hlidacStatuUrl: "Hlídač státu URL",
-  twitter: "Twitter",
-  instagram: "Instagram",
-  showForm: "Zobrazit formulář",
-} as const;
-
-type Field = keyof typeof COLUMNS;
-
-/** Base columns without which a row cannot be identified. */
-const REQUIRED_FIELDS: Field[] = ["districtId", "candidateNumber", "name"];
+/** Working draft filled column-by-column before a Candidate is finalized. */
+interface RowDraft {
+  districtId?: number;
+  surname?: string;
+  firstName?: string;
+  titles?: string;
+  electoralParty?: string;
+  occupation?: string;
+  birthYear?: number;
+  coalition?: string;
+  supported?: boolean;
+  signedDeclaration?: boolean;
+  hlidacStatuUrl?: string;
+  facebook?: string;
+  instagram?: string;
+  web?: string;
+}
 
 /** Strip BOM, zero-width spaces and surrounding whitespace from a CSV cell. */
 function clean(s: string): string {
   return (s ?? "").replace(/^﻿/, "").replace(/​/g, "").trim();
 }
 
-/** Normalize a header for tolerant matching. */
+/** Normalize a header for tolerant matching (folds embedded newlines/spaces). */
 function normalizeHeader(s: string): string {
   return clean(s).toLowerCase().replace(/\s+/g, " ");
 }
 
-/** Parse a Czech-locale float ("5,64" → 5.64). */
-function parseFloatCs(s: string): number {
-  return parseFloat(s.trim().replace(",", ".")) || 0;
-}
+const TRUTHY = new Set(["ano", "true", "1", "yes", "y"]);
 
-const TRUTHY = new Set(["ano", "true", "1", "x", "yes", "y", "✓", "ok"]);
-
-/** Interpret a cell as a boolean flag (Czech "Ano", "true", "1", "x", …). */
+/** Interpret a cell as a boolean flag ("Ano"/"true"/"1"; "0"/"NE"/"čekáme"/… are false). */
 function parseBool(s: string): boolean {
   return TRUTHY.has(clean(s).toLowerCase());
 }
 
-/** Reduce "@handle", "handle" or a full profile URL to a bare handle. */
-function stripHandle(s: string): string {
-  const v = clean(s).replace(/\/+$/, "");
+/** "0" is used as a "none" sentinel across several columns. */
+function cleanSentinel(s: string): string {
+  const v = clean(s);
+  return v === "0" ? "" : v;
+}
+
+/** Return the cell only if it is an http(s) URL, else "". */
+function asUrl(s: string): string {
+  const v = cleanSentinel(s);
+  return /^https?:\/\//i.test(v) ? v : "";
+}
+
+/** Reduce "@handle", "handle" or a full profile URL to a bare handle ("0" → ""). */
+function asHandle(s: string): string {
+  const v = cleanSentinel(s).replace(/\/+$/, "");
+  if (!v) return "";
   const fromUrl = v.match(/(?:x\.com|twitter\.com|instagram\.com)\/(?:#!\/)?@?([^/?#]+)/i);
   return (fromUrl ? fromUrl[1] : v).replace(/^@/, "");
+}
+
+/** Leading district id from "3 – Cheb" (en dash or hyphen). NaN if absent. */
+function parseDistrictId(s: string): number {
+  return parseInt(clean(s));
+}
+
+/** First 4-digit year found ("1977" or "12. 3. 1965" → 1977/1965). */
+function parseYear(s: string): number | undefined {
+  const m = clean(s).match(/(\d{4})/);
+  return m ? parseInt(m[1]) : undefined;
 }
 
 /** Common Czech male given names ending in "-a" (so they aren't read as female). */
@@ -133,76 +134,148 @@ export function guessGender(rawName: string): "m" | "f" {
 }
 
 /**
+ * Per-column importers. Each entry names the CSV column header it reads and
+ * writes the parsed value into the row draft. Columns are matched by header
+ * name (case-insensitive, whitespace-collapsed), NOT by position — so a
+ * reordered CSV still imports correctly, and unlisted columns (Média, Kontakt)
+ * are simply ignored. When the real CSV renames a column, update the header
+ * string here (and nothing else).
+ */
+const COLUMNS: { header: string; apply: (d: RowDraft, raw: string) => void }[] = [
+  { header: "Okres", apply: (d, v) => (d.districtId = parseDistrictId(v)) },
+  { header: "Podporujeme? (Ano/Ne)", apply: (d, v) => (d.supported = parseBool(v)) },
+  { header: "Příjmení", apply: (d, v) => (d.surname = clean(v)) },
+  { header: "Jméno", apply: (d, v) => (d.firstName = clean(v)) },
+  { header: "Tituly", apply: (d, v) => (d.titles = clean(v)) },
+  { header: "Datum narození", apply: (d, v) => (d.birthYear = parseYear(v)) },
+  { header: "Povolání", apply: (d, v) => (d.occupation = clean(v)) },
+  { header: "Nominace", apply: (d, v) => (d.electoralParty = clean(v)) },
+  { header: "Podpora", apply: (d, v) => (d.coalition = cleanSentinel(v) || undefined) },
+  { header: "Hlídač státu", apply: (d, v) => (d.hlidacStatuUrl = asUrl(v) || undefined) },
+  { header: "FB", apply: (d, v) => (d.facebook = asUrl(v) || undefined) },
+  { header: "Insta", apply: (d, v) => (d.instagram = asHandle(v) || undefined) },
+  { header: "Web", apply: (d, v) => (d.web = asUrl(v) || undefined) },
+  {
+    header: "Podepsána Deklarace?",
+    apply: (d, v) => (d.signedDeclaration = parseBool(v) || undefined),
+  },
+];
+
+/** Headers without which a row cannot be built. */
+const REQUIRED_HEADERS = ["Okres", "Příjmení", "Jméno"];
+
+/**
+ * Tokenize CSV text into rows of cells, honouring RFC-4180 quoting: quoted
+ * fields may contain the delimiter, newlines, and "" escaped quotes. Needed
+ * because the source has multi-line headers and semicolons inside quoted URLs.
+ */
+export function parseCsvRows(text: string, delimiter = ";"): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      row.push(field);
+      field = "";
+    } else if (ch === "\r") {
+      // ignore; handled by \n
+    } else if (ch === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += ch;
+    }
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+/**
  * Parse the semicolon-separated candidates CSV (with a header row) into
  * Candidate objects. Pure function — no filesystem access, so it can be
  * unit-tested against an inline sample.
  */
 export function parseCandidatesCsv(csv: string): Candidate[] {
-  const lines = csv.split("\n").filter((l) => l.trim());
-  if (lines.length === 0) return [];
+  const rows = parseCsvRows(csv).filter((r) => r.some((c) => c.trim() !== ""));
+  if (rows.length === 0) return [];
 
-  const headers = lines[0].split(";").map(normalizeHeader);
-  const colIndex = Object.fromEntries(
-    (Object.entries(COLUMNS) as [Field, string][]).map(([field, header]) => [
-      field,
-      headers.indexOf(normalizeHeader(header)),
-    ]),
-  ) as Record<Field, number>;
+  const headerIndex = new Map<string, number>();
+  rows[0].forEach((h, i) => {
+    const key = normalizeHeader(h);
+    if (!headerIndex.has(key)) headerIndex.set(key, i);
+  });
+  const indexOf = (header: string) => headerIndex.get(normalizeHeader(header)) ?? -1;
 
-  const missingRequired = REQUIRED_FIELDS.filter((f) => colIndex[f] < 0);
-  if (missingRequired.length > 0) {
+  const missing = REQUIRED_HEADERS.filter((h) => indexOf(h) < 0);
+  if (missing.length > 0) {
     console.warn(
-      `preprocess: required CSV columns not found — update COLUMNS in src/lib/preprocess.ts: ${missingRequired
-        .map((f) => `${f} ("${COLUMNS[f]}")`)
+      `preprocess: required CSV columns not found — update COLUMNS in src/lib/preprocess.ts: ${missing
+        .map((h) => `"${h}"`)
         .join(", ")}`,
     );
   }
 
-  const cell = (cols: string[], field: Field): string => {
-    const i = colIndex[field];
-    return i >= 0 ? clean(cols[i] ?? "") : "";
-  };
+  const perDistrict = new Map<number, number>();
+  const candidates: Candidate[] = [];
 
-  return lines.slice(1).map((line) => {
-    const cols = line.split(";");
-    const districtId = parseInt(cell(cols, "districtId"));
-    const candidateNumber = parseInt(cell(cols, "candidateNumber"));
-    const name = cell(cols, "name");
+  for (const cols of rows.slice(1)) {
+    const draft: RowDraft = {};
+    for (const col of COLUMNS) {
+      const i = indexOf(col.header);
+      if (i >= 0) col.apply(draft, cols[i] ?? "");
+    }
+
+    if (draft.districtId == null || Number.isNaN(draft.districtId)) continue;
+    if (!draft.surname && !draft.firstName) continue;
+
+    const n = (perDistrict.get(draft.districtId) ?? 0) + 1;
+    perDistrict.set(draft.districtId, n);
+
+    const name = [draft.surname, draft.firstName, draft.titles].filter(Boolean).join(" ");
 
     const c: Candidate = {
-      id: `${districtId}-${candidateNumber}`,
-      districtId,
-      candidateNumber,
+      id: `${draft.districtId}-${n}`,
+      districtId: draft.districtId,
+      candidateNumber: n,
       name,
-      age: parseInt(cell(cols, "age")) || 0,
-      electoralParty: cell(cols, "electoralParty"),
-      nominatingParty: cell(cols, "nominatingParty"),
-      politicalAffiliation: cell(cols, "politicalAffiliation"),
-      occupation: cell(cols, "occupation"),
-      residence: cell(cols, "residence"),
+      electoralParty: draft.electoralParty ?? "",
+      occupation: draft.occupation ?? "",
       gender: guessGender(name),
+      supported: draft.supported ?? false,
     };
+    if (draft.birthYear) c.birthYear = draft.birthYear;
+    if (draft.coalition) c.coalition = draft.coalition;
+    if (draft.signedDeclaration) c.signedDeclaration = true;
+    if (draft.hlidacStatuUrl) c.hlidacStatuUrl = draft.hlidacStatuUrl;
+    if (draft.facebook) c.facebook = draft.facebook;
+    if (draft.instagram) c.instagram = draft.instagram;
+    if (draft.web) c.web = draft.web;
 
-    const r1v = cell(cols, "round1Votes");
-    const r1p = cell(cols, "round1Percent");
-    const r2v = cell(cols, "round2Votes");
-    const r2p = cell(cols, "round2Percent");
-    if (r1v) c.round1Votes = parseInt(r1v) || 0;
-    if (r1p) c.round1Percent = parseFloatCs(r1p);
-    if (r2v) c.round2Votes = parseInt(r2v) || 0;
-    if (r2p) c.round2Percent = parseFloatCs(r2p);
+    candidates.push(c);
+  }
 
-    if (parseBool(cell(cols, "signedDeclaration"))) c.signedDeclaration = true;
-    const hlidac = cell(cols, "hlidacStatuUrl");
-    if (hlidac) c.hlidacStatuUrl = hlidac;
-    const twitter = stripHandle(cell(cols, "twitter"));
-    if (twitter) c.twitter = twitter;
-    const instagram = stripHandle(cell(cols, "instagram"));
-    if (instagram) c.instagram = instagram;
-    if (parseBool(cell(cols, "showForm"))) c.showForm = true;
-
-    return c;
-  });
+  return candidates;
 }
 
 /**

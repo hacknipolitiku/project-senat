@@ -32,31 +32,34 @@ pnpm install
 Veškerá data pocházejí z jednoho CSV souboru. Build má dva kroky:
 
 ```bash
-pnpm run data:prepare       # 1. stáhne CSV a zpracuje ho → data/candidates.json
+pnpm run data:prepare       # 1. připraví data → data/candidates.json
 pnpm run build              # 2. sestaví Astro web → dist/
 
 pnpm run build:all          # oba kroky za sebou
 ```
 
 `data/candidates.json` (výstup kroku 1) je commitnutý v repozitáři, takže `pnpm run build`
-funguje i bez stažení dat.
+funguje i bez zdrojového CSV.
 
-### 1. Prepare (download + preprocess)
+### 1. Prepare
+
+`data:prepare` zpracuje zdrojové CSV do `data/candidates.json`. Zdroj je **buď / anebo**:
 
 ```bash
-pnpm run data:prepare <url>                       # explicitní URL
-CANDIDATES_CSV_URL=<url> pnpm run data:prepare     # nebo z env proměnné
+pnpm run data:prepare <url>                       # stáhne z explicitní URL
+CANDIDATES_CSV_URL=<url> pnpm run data:prepare     # stáhne z env proměnné
+pnpm run data:prepare                              # bez URL → použije commitnuté CSV v data-raw/
 ```
 
-Stáhne zdrojové CSV do `data-raw/vsichni-platni-kandidati.csv` (build artefakt, v `.gitignore`)
-a rovnou ho zpracuje. URL se nikdy nezadává natvrdo. CSV je oddělené středníky, s českými
-desetinnými čárkami; výstupem je pole kandidátů v `data/candidates.json`, které načítá Astro
-Content Collection (`src/content.config.ts`).
+Když je zadaná URL, stáhne CSV do `data-raw/vsichni-platni-kandidati.csv` (build artefakt, v
+`.gitignore`); jinak použije commitnutý soubor `data-raw/tabulka-novy-format.csv`. URL se nikdy
+nezadává natvrdo. CSV je oddělené středníky (s uvozovkami kolem víceřádkových buněk); výstupem je
+pole kandidátů, které načítá Astro Content Collection (`src/content.config.ts`).
 
-Přegenerování `data/candidates.json` z lokálního CSV bez stahování (např. z přiloženého vzorku):
+Jen zpracování lokálního CSV bez stahování:
 
 ```bash
-pnpm cli data:preprocess [csv]      # výchozí vstup: data-raw/vsichni-platni-kandidati.csv
+pnpm cli data:preprocess [csv]      # výchozí vstup: data-raw/tabulka-novy-format.csv
 ```
 
 ## Vývoj
@@ -89,30 +92,32 @@ npx playwright test --grep "district"      # filtr podle názvu
 pnpm cli <příkaz>
 ```
 
-| Příkaz                  | Popis                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `data:prepare [url]`    | Stáhne zdrojové CSV a zpracuje ho do `data/candidates.json`. URL z argumentu nebo `$CANDIDATES_CSV_URL`. |
-| `data:preprocess [csv]` | Zpracuje lokální CSV do `data/candidates.json` (bez stahování).                                          |
-| `map:process`           | Zpracuje `data-raw/senate-map-wikipedia.svg` → `public/senate-map.svg`. Jednorázově po změně SVG.        |
+| Příkaz                  | Popis                                                                                                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data:prepare [url]`    | Zpracuje zdrojové CSV do `data/candidates.json`. S URL (arg / `$CANDIDATES_CSV_URL`) ho nejdřív stáhne, jinak použije commitnuté CSV v `data-raw/`. |
+| `data:preprocess [csv]` | Zpracuje lokální CSV do `data/candidates.json` (bez stahování).                                                                                     |
+| `map:process`           | Zpracuje `data-raw/senate-map-wikipedia.svg` → `public/senate-map.svg`. Jednorázově po změně SVG.                                                   |
 
 ## Data
 
 ### Kandidáti
 
-Zdroj: jeden CSV soubor (Český statistický úřad). Krok `data:prepare` z něj vygeneruje
-`data/candidates.json` – kanonický datový soubor, který web čte. Pole odpovídají sloupcům CSV:
-obvod, číslo, jméno, věk, volební/navrhující strana, politická příslušnost, povolání, bydliště,
-(volitelně) výsledky 1. a 2. kola a dále podepsání deklarace, URL na Hlídač státu, Twitter/X a
-Instagram (handle) a příznak zobrazení formuláře.
+Zdroj: jeden CSV soubor. Krok `data:prepare` z něj vygeneruje `data/candidates.json` – kanonický
+datový soubor, který web čte. Pole: obvod (z „Okres“), jméno (složené z příjmení/jména/titulů),
+strana (`Nominace`), povolání, pohlaví, `supported` (z „Podporujeme?“); volitelně rok narození,
+koalice (`Podpora`), podepsání deklarace, URL na Hlídač státu, Facebook, Instagram (handle) a web.
 
 Pohlaví (`gender` `m`/`f`) se **odhaduje ze jména** (`guessGender()`) – řídí české koncovky, např.
 odznak „Podepsal deklaraci“ (m) vs „Podepsala deklaraci“ (ž).
 
-Sloupce se mapují **podle názvu hlavičky, ne podle pořadí** – mapování je na jednom místě v
-konstantě `COLUMNS` v `src/lib/preprocess.ts`. Když má reálné CSV jiné názvy sloupců, stačí upravit
-tam. Tlačítko „Zapojit se do kampaně“ (zobrazí se podle sloupce „Zobrazit formulář“) vede na Google Form
-(`getCandidateFormUrl()` v `src/lib/links.ts`) a předvyplní pole `kandidat` jménem kandidáta – URL formuláře a ID pole jsou zatím zástupné hodnoty
-(placeholdery), doplní se později.
+Sloupce se mapují **podle názvu hlavičky, ne podle pořadí** – mapování a parsování jednotlivých
+sloupců je na jednom místě v registru `COLUMNS` v `src/lib/preprocess.ts` (každý sloupec má vlastní
+`parse`). Když má reálné CSV jiné názvy sloupců, stačí upravit tam. CSV se čte správným parserem
+(`parseCsvRows`), který zvládá uvozovky, víceřádkové buňky i středníky uvnitř URL.
+
+Tlačítko „Zapojit se do kampaně“ se zobrazí jen u podporovaných kandidátů (`supported`) a vede na
+Google Form (`getCandidateFormUrl()` v `src/lib/links.ts`), který předvyplní pole `kandidat` jménem
+kandidáta – URL formuláře a ID pole jsou zatím zástupné hodnoty (placeholdery), doplní se později.
 
 ### SVG mapa
 
@@ -127,4 +132,4 @@ pnpm cli map:process
 
 GitHub Pages, branch `main`. Základní URL je `/project-senat/` – konfigurováno v `astro.config.mjs`.
 Workflow spustí `data:prepare` → `build`. Pokud repozitářová proměnná `CANDIDATES_CSV_URL`
-není nastavená, build použije commitnutý `data/candidates.json`.
+není nastavená, `data:prepare` zpracuje commitnuté CSV v `data-raw/`.

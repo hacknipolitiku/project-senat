@@ -47,48 +47,48 @@ utilities: `districtSlug()`, `formatCzechName()`, `getPartyLogoFiles()`.
 
 ## Build pipeline
 
-All candidate data derives from one CSV. The pipeline is two steps: `data:prepare` (download +
-preprocess) then `build`. The download and preprocess logic remain **separate pure modules** — the
-combined step just calls them in sequence — so each is still unit-tested independently:
+All candidate data derives from one CSV. The pipeline is two steps: `data:prepare` then `build`.
+The download and preprocess logic are **separate pure modules**, each unit-tested independently.
 
-1. **Prepare** (`data:prepare` in `src/bin/cli.ts`) — calls, in order:
-   - `downloadCsv(url, dest)` (`src/lib/download.ts`) — fetches the CSV and writes it to
-     `data-raw/vsichni-platni-kandidati.csv`. The URL is never hardcoded: it comes from a CLI
-     argument or `$CANDIDATES_CSV_URL`. The downloaded file is a build artifact (gitignored).
-   - `preprocessCsvFile()` (`src/lib/preprocess.ts`) — `parseCandidatesCsv(csv)` (a pure function)
-     parses the semicolon-separated, Czech-locale (`,` decimals) CSV into `Candidate[]`, then
-     writes `data/candidates.json`.
+1. **Prepare** (`data:prepare` in `src/bin/cli.ts`) — **source is either/or**:
+   - If a URL is given (CLI arg or `$CANDIDATES_CSV_URL`), `downloadCsv()` (`src/lib/download.ts`)
+     fetches it to `data-raw/vsichni-platni-kandidati.csv` (a gitignored build artifact).
+   - Otherwise it uses the **committed** `DEFAULT_CSV_SRC` (`data-raw/tabulka-novy-format.csv`).
+   - Either way `preprocessCsvFile()` (`src/lib/preprocess.ts`) writes `data/candidates.json`.
+     `data:preprocess [csv]` runs just the preprocess on a local file.
 2. **Build** — `astro build` reads `data/candidates.json`.
 
-`data/candidates.json` is committed, so `pnpm run build` works standalone without downloading. The
-`data:preprocess` CLI command (no download) regenerates it from a local CSV, e.g. the sample fixture.
+`data/candidates.json` is committed, so `pnpm run build` works standalone without a source CSV.
 
-Unit tests live next to their modules (`src/lib/*.test.ts`) and run with `node --test`. They cover
-the download logic (with a stubbed global `fetch`) and CSV parsing (against an inline sample).
-Playwright e2e tests in `tests/` exercise the built site.
+Unit tests live next to their modules (`src/lib/*.test.ts`, run with `node --test`): the download
+logic (stubbed `fetch`), the CSV tokenizer, and per-column parsing. Playwright e2e tests in `tests/`
+exercise the built site.
 
-Each `data/candidates.json` entry has `id` = `${districtId}-${candidateNumber}`, used as the
-collection entry id. Fields: `districtId`, `candidateNumber`, `name`, `age`, `electoralParty`,
-`nominatingParty`, `politicalAffiliation`, `occupation`, `residence`, `gender` (`"m"`/`"f"`);
-optional `round1Votes`/`round1Percent`/`round2Votes`/`round2Percent`; and optional
-`signedDeclaration` (bool), `hlidacStatuUrl`, `twitter` (handle), `instagram` (handle),
-`showForm` (bool).
+**CSV parsing** (`src/lib/preprocess.ts`): `parseCsvRows()` is a proper RFC-4180 tokenizer (quoted
+fields may contain the `;` delimiter, newlines, and `""` escapes — the real export has multi-line
+headers and semicolons inside quoted URLs). `parseCandidatesCsv()` then maps columns **by header
+name, not position**, via the `COLUMNS` registry where **each column has its own `parse` function**.
+When the real CSV renames a column, update its `header` string there (and nothing else); unlisted
+columns (Média, Kontakt) are ignored, and missing required headers
+(`Okres`/`Příjmení`/`Jméno`) log a warning.
+
+Each `data/candidates.json` entry has `id` = `${districtId}-${candidateNumber}` (the number is a
+per-district running index in CSV order, **not** an official ballot number). Fields: `districtId`,
+`candidateNumber`, `name` (composed "Surname Firstname Titles"), `electoralParty` (from `Nominace`),
+`occupation`, `gender` (`"m"`/`"f"`), `supported` (bool, from `Podporujeme?`); optional `birthYear`,
+`coalition` (`Podpora`), `signedDeclaration`, `hlidacStatuUrl`, `facebook`, `instagram` (handle),
+`web`. Parsers treat `"0"` as a "none" sentinel, keep only `http(s)` URLs, and reduce social values
+to bare handles. `name` and `districtId` are composed from split CSV columns
+(`Příjmení`/`Jméno`/`Tituly`, and `Okres` = "3 – Cheb").
 
 `gender` is **guessed from the name** by `guessGender()` (surname ending `-á` → female, else a
-first name ending `-a` → female, else male; best-effort). It drives Czech word endings — e.g. the
+first name ending `-a` → female, else male; best-effort). It drives Czech word endings — the
 declaration badge reads "Podepsal deklaraci" (m) vs "Podepsala deklaraci" (f).
 
-**Column mapping**: `parseCandidatesCsv` maps CSV columns **by header name, not position**, via the
-single `COLUMNS` map in `src/lib/preprocess.ts`. When the real CSV uses different header text,
-update the strings there (and nothing else); an unmatched header just leaves its field
-empty/omitted, and missing required columns (`districtId`/`candidateNumber`/`name`) log a warning.
-Social handles accept `@handle`, `handle`, or a full profile URL (reduced to the bare handle);
-`signedDeclaration`/`showForm` are truthy flags (`Ano`/`true`/`1`/`x`/…).
-
-**Candidate sign-up form**: the "Zapojit se do kampaně" button (shown only when `showForm` — from
-the CSV's "Zobrazit formulář" column — is truthy) links to a Google Form via `getCandidateFormUrl()`
-in `src/lib/links.ts`, pre-filling the `kandidat` field with the candidate's full name. `GOOGLE_FORM_BASE` and `GOOGLE_FORM_KANDIDAT_ENTRY` there are
-**placeholders** — fill in the real form URL and field entry id.
+**Candidate sign-up form**: the "Zapojit se do kampaně" button — shown only when `supported` is
+true — links to a Google Form via `getCandidateFormUrl()` in `src/lib/links.ts`, pre-filling the
+`kandidat` field with the candidate's full name. `GOOGLE_FORM_BASE` and `GOOGLE_FORM_KANDIDAT_ENTRY`
+there are **placeholders** — fill in the real form URL and field entry id.
 
 ## SVG map
 
@@ -105,7 +105,7 @@ slug map passed via `define:vars`.
 
 CLI commands (`pnpm cli <command>`):
 
-- `data:prepare [url]` — download the source CSV (URL from argument or `$CANDIDATES_CSV_URL`) and preprocess it into `data/candidates.json`
+- `data:prepare [url]` — preprocess the source CSV into `data/candidates.json`; downloads first if a URL is given (arg or `$CANDIDATES_CSV_URL`), otherwise uses the committed `data-raw/tabulka-novy-format.csv`
 - `data:preprocess [csv]` — preprocess a local CSV into `data/candidates.json` (no download)
 - `map:process` — generate `public/senate-map.svg` from `data-raw/senate-map-wikipedia.svg`
 

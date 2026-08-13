@@ -28,14 +28,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Prepare data
+        # Downloads if CANDIDATES_CSV_URL is set, otherwise preprocesses the committed data-raw CSV.
         env:
           CANDIDATES_CSV_URL: ${{ vars.CANDIDATES_CSV_URL }}
-        run: |
-          if [ -n "$CANDIDATES_CSV_URL" ]; then
-            pnpm run data:prepare
-          else
-            echo "CANDIDATES_CSV_URL not set — building from committed data/candidates.json"
-          fi
+        run: pnpm run data:prepare
       - run: pnpm run build
       - uses: actions/upload-pages-artifact@v3
         with:
