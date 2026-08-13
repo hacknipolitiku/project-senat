@@ -69,8 +69,26 @@ Playwright e2e tests in `tests/` exercise the built site.
 
 Each `data/candidates.json` entry has `id` = `${districtId}-${candidateNumber}`, used as the
 collection entry id. Fields: `districtId`, `candidateNumber`, `name`, `age`, `electoralParty`,
-`nominatingParty`, `politicalAffiliation`, `occupation`, `residence`, and optional
-`round1Votes`/`round1Percent`/`round2Votes`/`round2Percent`.
+`nominatingParty`, `politicalAffiliation`, `occupation`, `residence`, `gender` (`"m"`/`"f"`);
+optional `round1Votes`/`round1Percent`/`round2Votes`/`round2Percent`; and optional
+`signedDeclaration` (bool), `hlidacStatuUrl`, `twitter` (handle), `instagram` (handle),
+`showForm` (bool).
+
+`gender` is **guessed from the name** by `guessGender()` (surname ending `-á` → female, else a
+first name ending `-a` → female, else male; best-effort). It drives Czech word endings — e.g. the
+declaration badge reads "Podepsal deklaraci" (m) vs "Podepsala deklaraci" (f).
+
+**Column mapping**: `parseCandidatesCsv` maps CSV columns **by header name, not position**, via the
+single `COLUMNS` map in `src/lib/preprocess.ts`. When the real CSV uses different header text,
+update the strings there (and nothing else); an unmatched header just leaves its field
+empty/omitted, and missing required columns (`districtId`/`candidateNumber`/`name`) log a warning.
+Social handles accept `@handle`, `handle`, or a full profile URL (reduced to the bare handle);
+`signedDeclaration`/`showForm` are truthy flags (`Ano`/`true`/`1`/`x`/…).
+
+**Candidate sign-up form**: the "Zapojit se do kampaně" button (shown only when `showForm` — from
+the CSV's "Zobrazit formulář" column — is truthy) links to a Google Form via `getCandidateFormUrl()`
+in `src/lib/links.ts`, pre-filling the `kandidat` field with the candidate's full name. `GOOGLE_FORM_BASE` and `GOOGLE_FORM_KANDIDAT_ENTRY` there are
+**placeholders** — fill in the real form URL and field entry id.
 
 ## SVG map
 

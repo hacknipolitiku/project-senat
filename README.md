@@ -101,8 +101,18 @@ pnpm cli <příkaz>
 
 Zdroj: jeden CSV soubor (Český statistický úřad). Krok `data:prepare` z něj vygeneruje
 `data/candidates.json` – kanonický datový soubor, který web čte. Pole odpovídají sloupcům CSV:
-obvod, číslo, jméno, věk, volební/navrhující strana, politická příslušnost, povolání, bydliště
-a (volitelně) výsledky 1. a 2. kola.
+obvod, číslo, jméno, věk, volební/navrhující strana, politická příslušnost, povolání, bydliště,
+(volitelně) výsledky 1. a 2. kola a dále podepsání deklarace, URL na Hlídač státu, Twitter/X a
+Instagram (handle) a příznak zobrazení formuláře.
+
+Pohlaví (`gender` `m`/`f`) se **odhaduje ze jména** (`guessGender()`) – řídí české koncovky, např.
+odznak „Podepsal deklaraci“ (m) vs „Podepsala deklaraci“ (ž).
+
+Sloupce se mapují **podle názvu hlavičky, ne podle pořadí** – mapování je na jednom místě v
+konstantě `COLUMNS` v `src/lib/preprocess.ts`. Když má reálné CSV jiné názvy sloupců, stačí upravit
+tam. Tlačítko „Zapojit se do kampaně“ (zobrazí se podle sloupce „Zobrazit formulář“) vede na Google Form
+(`getCandidateFormUrl()` v `src/lib/links.ts`) a předvyplní pole `kandidat` jménem kandidáta – URL formuláře a ID pole jsou zatím zástupné hodnoty
+(placeholdery), doplní se později.
 
 ### SVG mapa
 

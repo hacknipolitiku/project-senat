@@ -14,10 +14,16 @@ const candidates = defineCollection({
     politicalAffiliation: z.string(),
     occupation: z.string(),
     residence: z.string(),
+    gender: z.enum(["m", "f"]).optional(),
     round1Votes: z.number().optional(),
     round1Percent: z.number().optional(),
     round2Votes: z.number().optional(),
     round2Percent: z.number().optional(),
+    signedDeclaration: z.boolean().optional(),
+    hlidacStatuUrl: z.string().optional(),
+    twitter: z.string().optional(),
+    instagram: z.string().optional(),
+    showForm: z.boolean().optional(),
   }),
 });
 

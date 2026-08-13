@@ -4,12 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { parseCandidatesCsv, preprocessCsvFile } from "./preprocess.ts";
+import { guessGender, parseCandidatesCsv, preprocessCsvFile } from "./preprocess.ts";
+
+const HEADER =
+  "Volební obvod;Kandidát.číslo;Kandidát.příjmení, jméno, tituly;Kandidát.věk;Volební strana;Navrhující strana;Politická příslušnost;Povolání;Bydliště;1. kolo.počet hlasů;1. kolo.%;2. kolo.počet hlasů;2. kolo.%;Podepsal deklaraci;Hlídač státu URL;Twitter;Instagram;Zobrazit formulář";
 
 const SAMPLE = [
-  "Volební obvod;Kandidát.číslo;Kandidát.příjmení, jméno, tituly;Kandidát.věk;Volební strana;Navrhující strana;Politická příslušnost;Povolání;Bydliště;1. kolo.počet hlasů;1. kolo.%;2. kolo.počet hlasů;2. kolo.%",
-  "3;1;Sedláček Jiří Ing.;64;Trikolora;Trikolora;BEZPP;jednatel společnosti;Tachov;1613;5,64;0;0,00",
-  "3;3;Brožová Lampertová Jaroslava Ing.;66;ANO;ANO;ANO;starostka;Velká Hleďsebe;4927;17,24;3091;29,68",
+  HEADER,
+  "3;1;Sedláček Jiří Ing.;64;Trikolora;Trikolora;BEZPP;jednatel společnosti;Tachov;1613;5,64;0;0,00;Ano;https://www.hlidacstatu.cz/osoba/jiri-sedlacek;@jsedlacek;https://instagram.com/jsedlacek_ig/;Ano",
+  "3;3;Brožová Lampertová Jaroslava Ing.;66;ANO;ANO;ANO;starostka;Velká Hleďsebe;4927;17,24;3091;29,68;;;;;",
 ].join("\n");
 
 test("parses core candidate fields", () => {
@@ -47,12 +50,62 @@ test("parses Czech-locale percentages and round-2 results", () => {
   assert.equal(second.round2Percent, 29.68);
 });
 
-test("skips blank lines and omits optional vote fields when absent", () => {
-  const csv = ["header", "3;5;Novák Jan;40;ANO;ANO;ANO;učitel;Cheb;;;;", "", "  "].join("\n");
-  const [c] = parseCandidatesCsv(csv);
-  assert.equal(parseCandidatesCsv(csv).length, 1);
-  assert.equal(c.round1Votes, undefined);
-  assert.equal(c.round2Percent, undefined);
+test("parses declaration, socials and form columns when present", () => {
+  const [first] = parseCandidatesCsv(SAMPLE);
+  assert.equal(first.signedDeclaration, true);
+  assert.equal(first.hlidacStatuUrl, "https://www.hlidacstatu.cz/osoba/jiri-sedlacek");
+  assert.equal(first.twitter, "jsedlacek"); // "@" stripped
+  assert.equal(first.instagram, "jsedlacek_ig"); // reduced from full URL
+  assert.equal(first.showForm, true);
+});
+
+test("omits new fields when their cells are empty", () => {
+  const [, second] = parseCandidatesCsv(SAMPLE);
+  assert.equal(second.signedDeclaration, undefined);
+  assert.equal(second.hlidacStatuUrl, undefined);
+  assert.equal(second.twitter, undefined);
+  assert.equal(second.instagram, undefined);
+  assert.equal(second.showForm, undefined);
+});
+
+test("guesses gender from the name", () => {
+  // Feminine surname (-á / -ová)
+  assert.equal(guessGender("Brožová Lampertová Jaroslava Ing."), "f");
+  assert.equal(guessGender("Monsportová Markéta"), "f");
+  // Masculine
+  assert.equal(guessGender("Sedláček Jiří Ing."), "m");
+  assert.equal(guessGender("Švarcbek Josef RSDr."), "m");
+  // Foreign/indeclinable surname → fall back to first name ending
+  assert.equal(guessGender("Nguyen Jana"), "f");
+  assert.equal(guessGender("Svoboda Ilja"), "m"); // male name ending in -a
+});
+
+test("populates gender on every parsed candidate", () => {
+  const [first, second] = parseCandidatesCsv(SAMPLE);
+  assert.equal(first.gender, "m"); // Sedláček Jiří
+  assert.equal(second.gender, "f"); // Brožová ... Jaroslava
+});
+
+test("maps columns by header name, not position (reordered CSV)", () => {
+  // Twitter before the name, votes omitted entirely — header order differs.
+  const reordered = [
+    "Twitter;Kandidát.věk;Volební obvod;Kandidát.číslo;Kandidát.příjmení, jméno, tituly;Podepsal deklaraci",
+    "novak_x;40;6;2;Novák Jan;ano",
+  ].join("\n");
+  const [c] = parseCandidatesCsv(reordered);
+  assert.equal(c.id, "6-2");
+  assert.equal(c.name, "Novák Jan");
+  assert.equal(c.age, 40);
+  assert.equal(c.twitter, "novak_x");
+  assert.equal(c.signedDeclaration, true);
+});
+
+test("skips blank lines and treats absent optional columns as empty", () => {
+  const csv = [HEADER, "3;5;Novák Jan;40;ANO;ANO;ANO;učitel;Cheb;;;;;;;;;", "", "  "].join("\n");
+  const parsed = parseCandidatesCsv(csv);
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].round1Votes, undefined);
+  assert.equal(parsed[0].showForm, undefined);
 });
 
 test("preprocessCsvFile writes a JSON array with stable ids", () => {
