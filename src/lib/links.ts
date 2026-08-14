@@ -4,6 +4,10 @@ export function getHomepageUrl(): string {
   return base;
 }
 
+export function getLogoUrl(): string {
+  return `${base}senat-udrzime.png`;
+}
+
 export function getFaviconUrl(): string {
   return `${base}favicon.svg`;
 }
